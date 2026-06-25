@@ -34,9 +34,18 @@ test('sample catalog items pass assertCosmeticOnlyPurchase', () => {
 test('demo purchase blocked when ALLOW_DEMO_PURCHASES is not true', () => {
   const original = process.env.ALLOW_DEMO_PURCHASES;
   try {
-    process.env.ALLOW_DEMO_PURCHASES = 'false';
-    const allowed = process.env.ALLOW_DEMO_PURCHASES === 'true';
-    assert.equal(allowed, false);
+    for (const val of [undefined, 'false', '0', '']) {
+      if (val === undefined) {
+        delete process.env.ALLOW_DEMO_PURCHASES;
+      } else {
+        process.env.ALLOW_DEMO_PURCHASES = val;
+      }
+      assert.equal(
+        process.env.ALLOW_DEMO_PURCHASES === 'true',
+        false,
+        `Expected blocked for ALLOW_DEMO_PURCHASES=${val}`,
+      );
+    }
   } finally {
     if (original === undefined) {
       delete process.env.ALLOW_DEMO_PURCHASES;
@@ -46,12 +55,11 @@ test('demo purchase blocked when ALLOW_DEMO_PURCHASES is not true', () => {
   }
 });
 
-test('demo purchase allowed when ALLOW_DEMO_PURCHASES is true', () => {
+test('demo purchase allowed when ALLOW_DEMO_PURCHASES=true', () => {
   const original = process.env.ALLOW_DEMO_PURCHASES;
   try {
     process.env.ALLOW_DEMO_PURCHASES = 'true';
-    const allowed = process.env.ALLOW_DEMO_PURCHASES === 'true';
-    assert.equal(allowed, true);
+    assert.equal(process.env.ALLOW_DEMO_PURCHASES === 'true', true);
   } finally {
     if (original === undefined) {
       delete process.env.ALLOW_DEMO_PURCHASES;
