@@ -22,6 +22,11 @@ const socket = io(API);
 const MAX_SEATS = 6;
 const COSMETICS_STORAGE_KEY = 'shootaz-cosmetics-v1';
 
+const RARITY_SCORE = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
+const RARITY_COLOR = {
+  common: '#888', rare: '#4da6ff', epic: '#9d4edd', legendary: '#ff006e', founder: '#ffd60a', vip: '#ffd60a',
+};
+
 const AVATAR_PRESETS = [
   { id: 'avatar-gold-shooter', name: 'Gold Shooter', icon: '🥇' },
   { id: 'avatar-royal-player', name: 'Royal Player', icon: '👑' },
@@ -405,12 +410,10 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }
   
   // Calculate Style Score from equipped cosmetic rarities
   const calcStyleScore = () => {
-    const rarityValues = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
     let score = 0;
-    Object.entries(cosmetics.equipped).forEach(([slot, itemId]) => {
+    Object.entries(cosmetics.equipped).forEach(([, itemId]) => {
       if (itemId && catalogIndex.has(itemId)) {
-        const item = catalogIndex.get(itemId);
-        score += rarityValues[item.rarity] || 0;
+        score += RARITY_SCORE[catalogIndex.get(itemId).rarity] || 0;
       }
     });
     return Math.round(score);
@@ -569,12 +572,9 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }
   );
 }
 
-function ShowcaseItem({ label, icon, name, rarity, catalogIndex }) {
+function ShowcaseItem({ label, icon, name, rarity }) {
   const isEmpty = !name || name === 'None';
-  const rarityColors = {
-    common: '#888', rare: '#4da6ff', epic: '#9d4edd', legendary: '#ff006e', founder: '#ffd60a', vip: '#ffd60a',
-  };
-  const rarityColor = rarity ? rarityColors[rarity] || '#888' : null;
+  const rarityColor = rarity ? RARITY_COLOR[rarity] || '#888' : null;
   return (
     <div className={`showcase-item ${isEmpty ? 'showcase-item-empty' : 'showcase-item-equipped'}`}>
       <span className="showcase-item-icon">{icon}</span>
@@ -592,11 +592,10 @@ function ProfileTab({ cosmetics, user, catalogIndex }) {
   const selectedAvatar = avatarById(cosmetics.equipped.avatar);
 
   const calcStyleScore = () => {
-    const rarityValues = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
     let score = 0;
     Object.entries(cosmetics.equipped).forEach(([, itemId]) => {
       if (itemId && catalogIndex.has(itemId)) {
-        score += rarityValues[catalogIndex.get(itemId).rarity] || 0;
+        score += RARITY_SCORE[catalogIndex.get(itemId).rarity] || 0;
       }
     });
     return Math.round(score);
@@ -639,7 +638,7 @@ function ProfileTab({ cosmetics, user, catalogIndex }) {
             <div className="profile-style-score">
               <span className="style-score-label">✨ Style Score</span>
               <span className="style-score-value">{styleScore}</span>
-              <span className="muted text-xs">cosmetic only</span>
+              <span className="muted text-xs">Cosmetic Only</span>
             </div>
           </div>
         </div>
@@ -649,7 +648,7 @@ function ProfileTab({ cosmetics, user, catalogIndex }) {
           <div className="profile-outfit-banner">
             <span>{outfitItem.icon || '👔'}</span>
             <span className="profile-outfit-name">{outfitItem.name}</span>
-            <span className="profile-outfit-rarity" style={{ color: { common:'#888',rare:'#4da6ff',epic:'#9d4edd',legendary:'#ff006e',founder:'#ffd60a',vip:'#ffd60a' }[outfitItem.rarity] || '#888' }}>
+            <span className="profile-outfit-rarity" style={{ color: RARITY_COLOR[outfitItem.rarity] || '#888' }}>
               {(outfitItem.rarity || 'common').toUpperCase()}
             </span>
           </div>
@@ -673,7 +672,6 @@ function ProfileTab({ cosmetics, user, catalogIndex }) {
             <div className="showcase-items">
               <ShowcaseItem label="Vehicle" icon="🚘" name={vehicleItem?.name || 'None'} rarity={vehicleItem?.rarity} />
             </div>
-            {!vehicleItem && <p className="muted text-xs mt-2">No vehicle in the garage yet.</p>}
           </div>
 
           {/* Property Showcase */}
@@ -682,7 +680,6 @@ function ProfileTab({ cosmetics, user, catalogIndex }) {
             <div className="showcase-items">
               <ShowcaseItem label="Home" icon="🏡" name={homeItem?.name || 'None'} rarity={homeItem?.rarity} />
             </div>
-            {!homeItem && <p className="muted text-xs mt-2">No property acquired yet.</p>}
           </div>
 
           {/* Outfit */}
@@ -1059,15 +1056,7 @@ export default function App() {
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {filteredShopItems.map((item) => {
                 const owned = cosmetics.ownedItemIds.includes(item.id);
-                const rarityColors = {
-                  common: '#888',
-                  rare: '#4da6ff',
-                  epic: '#9d4edd',
-                  legendary: '#ff006e',
-                  founder: '#ffd60a',
-                  vip: '#ffd60a',
-                };
-                const rarityColor = rarityColors[item.rarity] || '#888';
+                const rarityColor = RARITY_COLOR[item.rarity] || '#888';
                 return (
                   <div
                     key={item.id}
