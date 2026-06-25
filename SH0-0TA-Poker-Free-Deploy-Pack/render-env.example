@@ -1,0 +1,17 @@
+# Backend Render env vars
+NODE_ENV=production
+CLIENT_ORIGIN=https://your-render-static-site.onrender.com
+DATABASE_URL=postgresql://YOUR_NEON_URL
+JWT_SECRET=generate-a-long-random-secret
+ADMIN_EMAIL=you@example.com
+ADMIN_PASSWORD=change-this-long-password
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+PUBLIC_BASE_URL=https://your-render-static-site.onrender.com
+REAL_MONEY_ENABLED=false
+PLAYER_FUNDED_PRIZES_ENABLED=false
+PAID_TOURNAMENT_ENTRY_ENABLED=false
+CHIP_CASHOUT_ENABLED=false
+
+# Frontend Render env var
+VITE_API_BASE_URL=https://your-render-api.onrender.com
