@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sh0-0ta-poker-api
+    name: shootazpoker-api
     env: node
     plan: free
     rootDir: server
@@ -44,5 +44,7 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
+      - key: BASE_PATH
+        value: /
       - key: VITE_API_BASE_URL
-        sync: false
+        value: https://shootazpoker-api.onrender.com
