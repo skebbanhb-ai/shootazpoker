@@ -244,49 +244,67 @@ function TableTab({ table, name, join, ev, log, cosmetics }) {
   );
 }
 
-function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user }) {
+function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }) {
   const selectedAvatar = avatarById(cosmetics.equipped.avatar);
+  
+  // Calculate Style Score from equipped cosmetic rarities
+  const calcStyleScore = () => {
+    const rarityValues = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
+    let score = 0;
+    Object.entries(cosmetics.equipped).forEach(([slot, itemId]) => {
+      if (itemId && catalogIndex.has(itemId)) {
+        const item = catalogIndex.get(itemId);
+        score += rarityValues[item.rarity] || 0;
+      }
+    });
+    return Math.round(score);
+  };
 
-  const ownedNames = cosmetics.ownedItemIds
-    .map((id) => itemNameById(catalogIndex, id, AVATAR_PRESETS.find((a) => a.id === id)?.name || id))
-    .sort();
+  const styleScore = calcStyleScore();
+  const ownedItems = cosmetics.ownedItemIds.map((id) => catalogIndex.get(id)).filter(Boolean);
 
   return (
     <Panel title="Customize Profile" icon={<Sparkles />}>
-      <div className="customize-grid">
-        <div className="panel p-4">
-          <h3 className="font-black text-xl">Player Profile</h3>
-          <p className="muted">Display Name: {user?.name || cosmetics.displayName}</p>
+      <div className="customize-sections">
+        {/* Profile Overview */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">🎭 Player Profile</h3>
+          <div className="profile-overview">
+            <div>
+              <p className="muted text-sm">Display Name</p>
+              <p className="font-black">{user?.name || cosmetics.displayName}</p>
+            </div>
+            <div>
+              <p className="muted text-sm">Style Score</p>
+              <p className="font-black text-2xl text-yellow-400">{styleScore}</p>
+              <p className="muted text-xs">Cosmetic only, does not affect gameplay</p>
+            </div>
+            <div>
+              <p className="muted text-sm">Status</p>
+              <p className="font-black">{user?.vip ? '👑 VIP Member' : 'Player'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Avatar & Frame */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">👤 Avatar & Frame</h3>
           <div className={`avatar-ring large frame-${slug(cosmetics.equipped.avatarFrame)}`}>
             <span className="avatar-icon" role="img" aria-label="selected-avatar">
               {selectedAvatar.icon}
             </span>
           </div>
-          <p className="muted">
-            Badge:{' '}
-            {cosmetics.equipped.badge === 'vip-monthly'
-              ? 'VIP'
-              : itemNameById(catalogIndex, cosmetics.equipped.badge, 'None')}
-          </p>
-          <p className="muted">Card Back: {itemNameById(catalogIndex, cosmetics.equipped.cardBack, 'Default')}</p>
-          <p className="muted">Table Skin: {itemNameById(catalogIndex, cosmetics.equipped.tableSkin, 'Default')}</p>
-          <p className="muted">
-            Avatar Frame: {itemNameById(catalogIndex, cosmetics.equipped.avatarFrame, 'Default')}
-          </p>
-          {(cosmetics.equipped.badge === 'vip-monthly' || user?.vip) && (
-            <p className="profile-vip-pill">VIP Member</p>
-          )}
-          <h4 className="font-black mt-4">Owned Cosmetics</h4>
-          <ul className="owned-list">
-            {ownedNames.map((itemName) => (
-              <li key={itemName}>{itemName}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="panel p-4">
-          <h3 className="font-black text-xl">Avatar Styles</h3>
-          <div className="avatar-grid">
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div>
+              <p className="muted text-xs">Selected Avatar</p>
+              <p className="text-sm font-bold">{selectedAvatar.name}</p>
+            </div>
+            <div>
+              <p className="muted text-xs">Avatar Frame</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.avatarFrame, 'None')}</p>
+            </div>
+          </div>
+          <div className="avatar-grid mt-4">
             {AVATAR_PRESETS.map((preset) => {
               const equipped = cosmetics.equipped.avatar === preset.id;
               return (
@@ -296,16 +314,94 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user }) {
                   onClick={() =>
                     setCosmetics((prev) => ({
                       ...prev,
-                      ownedItemIds: Array.from(new Set([...prev.ownedItemIds, preset.id])),
                       equipped: { ...prev.equipped, avatar: preset.id },
                     }))
                   }
+                  title={preset.name}
                 >
                   <span className="avatar-emoji">{preset.icon}</span>
-                  <span>{preset.name}</span>
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Jewelry Box */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">💎 Jewelry Box</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="muted text-xs">Watch</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.watch, 'None')}</p>
+            </div>
+            <div>
+              <p className="muted text-xs">Chain</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.chain, 'None')}</p>
+            </div>
+            <div>
+              <p className="muted text-xs">Ring</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.ring, 'None')}</p>
+            </div>
+            <div>
+              <p className="muted text-xs">Badge</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.badge, 'None')}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Garage */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">🏎️ Garage</h3>
+          <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.vehicle, 'None')}</p>
+        </div>
+
+        {/* Properties */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">🏠 Properties</h3>
+          <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.home, 'None')}</p>
+        </div>
+
+        {/* Outfits */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">👔 Outfits</h3>
+          <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.outfit, 'None')}</p>
+        </div>
+
+        {/* Table & Cards */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">🎰 Table & Cards Style</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="muted text-xs">Table Skin</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.tableSkin, 'Default')}</p>
+            </div>
+            <div>
+              <p className="muted text-xs">Card Back</p>
+              <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.cardBack, 'Default')}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Background */}
+        <div className="panel p-4 customize-section">
+          <h3 className="font-black text-xl mb-3">🌅 Profile Background</h3>
+          <p className="text-sm font-bold">{itemNameById(catalogIndex, cosmetics.equipped.background, 'Default')}</p>
+        </div>
+
+        {/* Owned Items Summary */}
+        <div className="panel p-4 customize-section col-span-full">
+          <h3 className="font-black text-xl mb-3">📦 Your Collection ({cosmetics.ownedItemIds.length} items)</h3>
+          <div className="owned-items-summary">
+            {ownedItems.slice(0, 12).map((item) => (
+              <div key={item.id} className="owned-item-chip" title={item.name}>
+                <span className="text-sm">{item.icon || '•'} {item.name}</span>
+              </div>
+            ))}
+            {ownedItems.length > 12 && (
+              <div className="owned-item-chip">
+                <span className="text-sm">+{ownedItems.length - 12} more</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -388,10 +484,11 @@ export default function App() {
   const shopCategories = useMemo(
     () =>
       Object.keys(shopData?.categories || {}).filter((category) =>
-        ['cardBacks', 'tableSkins', 'avatarFrames', 'profileBadges', 'emotes', 'vipMembership'].includes(
+        ['avatars', 'cardBacks', 'tableSkins', 'avatarFrames', 'watches', 'jewelry', 
+         'vehicles', 'homes', 'outfits', 'backgrounds', 'profileBadges', 'emotes', 'vipMembership'].includes(
           category,
         ),
-      ),
+      ).sort(),
     [shopData],
   );
 
@@ -584,7 +681,7 @@ export default function App() {
         )}
 
         {tab === 'customize' && (
-          <CustomizeTab cosmetics={cosmetics} setCosmetics={setCosmetics} catalogIndex={catalogIndex} user={user} />
+          <CustomizeTab cosmetics={cosmetics} setCosmetics={setCosmetics} catalogIndex={catalogIndex} user={user} equipItem={equipItem} />
         )}
 
         {tab === 'shop' && (
@@ -598,40 +695,65 @@ export default function App() {
               {STRIPE_PUBLISHABLE_KEY ? 'Configured' : 'Not configured'}.
             </p>
 
-            <div className="shop-filters">
+            <div className="shop-filters mt-6">
               <button
                 className={`btn ${shopCategory === 'all' ? 'gold' : 'dark'}`}
                 onClick={() => setShopCategory('all')}
               >
-                All
+                All Items
               </button>
-              {shopCategories.map((category) => (
-                <button
-                  key={category}
-                  className={`btn ${shopCategory === category ? 'gold' : 'dark'}`}
-                  onClick={() => setShopCategory(category)}
-                >
-                  {category}
-                </button>
-              ))}
+              {shopCategories.map((category) => {
+                const categoryLabel = category
+                  .replace(/([A-Z])/g, ' $1')
+                  .trim()
+                  .replace(/^./, (s) => s.toUpperCase());
+                return (
+                  <button
+                    key={category}
+                    className={`btn ${shopCategory === category ? 'gold' : 'dark'}`}
+                    onClick={() => setShopCategory(category)}
+                  >
+                    {categoryLabel}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {filteredShopItems.map((item) => {
                 const owned = cosmetics.ownedItemIds.includes(item.id);
+                const rarityColors = {
+                  common: '#888',
+                  rare: '#4da6ff',
+                  epic: '#9d4edd',
+                  legendary: '#ff006e',
+                  founder: '#ffd60a',
+                  vip: '#ffd60a',
+                };
+                const rarityColor = rarityColors[item.rarity] || '#888';
                 return (
-                  <div className="panel p-4 shop-item-card" key={item.id}>
-                    <h3 className="font-black">{item.name}</h3>
-                    <p className="muted">{item.category}</p>
-                    <p className="text-2xl font-black">${(item.priceCents / 100).toFixed(2)}</p>
-                    <p className={`shop-owned ${owned ? 'yes' : 'no'}`}>{owned ? 'Owned' : 'Not Owned'}</p>
-                    <div className="shop-actions">
+                  <div
+                    key={item.id}
+                    className="panel p-4 shop-item-card"
+                    style={{ borderTop: `4px solid ${rarityColor}` }}
+                  >
+                    <div className="text-3xl mb-2 text-center">{item.icon || '•'}</div>
+                    <h3 className="font-black text-sm">{item.name}</h3>
+                    <p className="muted text-xs">{item.category}</p>
+                    <p className="text-xs font-bold mt-1" style={{ color: rarityColor }}>
+                      {(item.rarity || 'common').toUpperCase()}
+                    </p>
+                    <p className="text-lg font-black text-yellow-400 mt-2">${(item.priceCents / 100).toFixed(2)}</p>
+                    <p className={`shop-owned text-xs mt-1 ${owned ? 'yes' : 'no'}`}>
+                      {owned ? '✓ Owned' : 'Not Owned'}
+                    </p>
+                    <div className="shop-actions mt-3 gap-2">
                       {owned ? (
-                        <button className="btn dark" onClick={() => equipItem(item.id)}>
+                        <button className="btn dark text-sm" onClick={() => equipItem(item.id)}>
                           Equip
                         </button>
                       ) : (
-                        <button className="btn gold" onClick={() => buyItem(item.id)}>
+                        <button className="btn gold text-sm" onClick={() => buyItem(item.id)}>
                           Buy
                         </button>
                       )}
