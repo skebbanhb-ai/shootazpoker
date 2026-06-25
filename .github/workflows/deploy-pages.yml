@@ -24,19 +24,21 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: client/package.json
+          cache-dependency-path:
+            package-lock.json
 
       - name: Install dependencies
-        working-directory: client
-        run: npm install
+        run: npm ci
 
       - name: Build
-        working-directory: client
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ vars.VITE_STRIPE_PUBLISHABLE_KEY }}
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
-        run: npm run build
+        run: npm run build --workspace=client
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
