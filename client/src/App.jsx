@@ -99,7 +99,7 @@ function itemNameById(catalogIndex, id, fallback = 'None') {
   return catalogIndex.get(id)?.name || fallback;
 }
 
-function withPaymentParamRemoved(params) {
+function buildUrlFromParams(params) {
   const query = params.toString();
   return `${window.location.pathname}${query ? `?${query}` : ''}`;
 }
@@ -346,12 +346,12 @@ export default function App() {
     if (payment === 'success') {
       setPaymentBanner('Purchase successful. Your cosmetic is ready.');
       params.delete('payment');
-      window.history.replaceState({}, '', withPaymentParamRemoved(params));
+      window.history.replaceState({}, '', buildUrlFromParams(params));
     }
     if (payment === 'cancelled') {
       setPaymentBanner('Checkout cancelled. No purchase was made.');
       params.delete('payment');
-      window.history.replaceState({}, '', withPaymentParamRemoved(params));
+      window.history.replaceState({}, '', buildUrlFromParams(params));
     }
   }, []);
 

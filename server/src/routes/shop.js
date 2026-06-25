@@ -59,7 +59,6 @@ shopRouter.post('/purchase', (req, res) => {
   const user = users.get(userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   if (!item) return res.status(404).json({ error: 'Item not found' });
-  ensureUserCosmetics(userId);
 
   try {
     assertCosmeticOnlyPurchase(item);

@@ -101,6 +101,6 @@ function sanitizeCosmeticProfile(userId, cosmeticProfile = {}) {
     safe[slot] = itemId;
   }
 
-  safe.vip = safe.badge === 'vip-monthly' || users.get(userId)?.vip === true;
+  safe.vip = (safe.badge === 'vip-monthly' && owned.has('vip-monthly')) || users.get(userId)?.vip === true;
   return safe;
 }
