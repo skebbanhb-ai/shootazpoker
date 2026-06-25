@@ -56,6 +56,12 @@ shopRouter.get('/inventory/:userId', (req, res) => {
 });
 
 shopRouter.post('/purchase', (req, res) => {
+  if (process.env.ALLOW_DEMO_PURCHASES !== 'true') {
+    return res.status(403).json({
+      error: 'Checkout is not configured yet. Please try again later.',
+    });
+  }
+
   const { userId, itemId } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'userId is required' });
   const item = cosmeticsCatalog.find((candidate) => candidate.id === itemId);
