@@ -18,6 +18,7 @@ import {
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
 const ENABLE_DEMO_PURCHASES = import.meta.env.VITE_ENABLE_DEMO_PURCHASES === 'true';
+const APP_NAME = import.meta.env.VITE_APP_NAME || 'ShootazPokerHouse';
 const COSMETICS_VERSION = 'v1';
 const socket = io(API);
 const MAX_SEATS = 6;
@@ -93,7 +94,7 @@ function Card({ c, cardTheme }) {
   return (
     <span className={`cardx ${red ? 'red' : ''} ${hidden ? 'is-hidden' : ''} theme-${slug(cardTheme)}`}>
       {hidden ? (
-        <span className="card-back-mark">SH0 0TA</span>
+        <span className="card-back-mark">SPH</span>
       ) : (
         <>
           <span className="card-rank">{rank}</span>
@@ -921,7 +922,7 @@ export default function App() {
         <header className="flex flex-wrap gap-4 items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-black flex gap-2 items-center">
-              <Flame className="text-yellow-400" /> SH0 0TA Poker
+              <Flame className="text-yellow-400" /> {APP_NAME}
             </h1>
             <p className="muted">
               Sponsored Creator League Edition — free play, sponsor-funded prizes, cosmetics only.

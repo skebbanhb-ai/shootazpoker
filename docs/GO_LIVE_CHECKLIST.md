@@ -1,6 +1,6 @@
 # Go-Live Checklist
 
-Use this checklist before launching SH0 0TA Poker to production.
+Use this checklist before launching ShootazPokerHouse to production.
 
 ---
 
@@ -12,7 +12,7 @@ Use this checklist before launching SH0 0TA Poker to production.
 |---|---|
 | `VITE_BASE_PATH` | `/shootazpoker/` |
 | `VITE_API_BASE_URL` | `https://shootazpoker-api.onrender.com` |
-| `VITE_APP_NAME` | `SH0 0TA Poker` |
+| `VITE_APP_NAME` | `ShootazPokerHouse` |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_test_REPLACE_ME` |
 | `VITE_ENABLE_DEMO_PURCHASES` | `false` |
 
@@ -36,7 +36,7 @@ Set these under **GitHub → Settings → Secrets and variables → Actions → 
 |---|---|
 | `VITE_BASE_PATH` | `/` |
 | `VITE_API_BASE_URL` | `https://shootazpoker-api.onrender.com` |
-| `VITE_APP_NAME` | `SH0 0TA Poker` |
+| `VITE_APP_NAME` | `ShootazPokerHouse` |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_test_REPLACE_ME` |
 | `VITE_ENABLE_DEMO_PURCHASES` | `false` |
 

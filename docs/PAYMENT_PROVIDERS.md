@@ -1,6 +1,6 @@
 # Payment Providers
 
-SH0 0TA Poker supports cosmetic/VIP purchases only. Purchases must never affect poker odds, hand outcomes, rankings, prize eligibility, tournaments, matchmaking, or gameplay.
+ShootazPokerHouse supports cosmetic/VIP purchases only. Purchases must never affect poker odds, hand outcomes, rankings, prize eligibility, tournaments, matchmaking, or gameplay.
 
 ---
 
@@ -38,9 +38,9 @@ Square and Cash App Pay can be added as an alternative cosmetic checkout provide
 **When to enable:** Set `SQUARE_ACCESS_TOKEN` and `SQUARE_LOCATION_ID` on the backend.
 
 **Backend environment variables (secret — never expose to frontend):**
-- `SQUARE_ACCESS_TOKEN=your_square_access_token`
-- `SQUARE_LOCATION_ID=your_square_location_id`
-- `SQUARE_WEBHOOK_SIGNATURE_KEY=your_square_webhook_signature_key`
+- `SQUARE_ACCESS_TOKEN=replace_me`
+- `SQUARE_LOCATION_ID=replace_me`
+- `SQUARE_WEBHOOK_SIGNATURE_KEY=replace_menature_key`
 
 **Implementation guidance:**
 - Use the Square Checkout API to create a payment link for cosmetic items.
@@ -60,8 +60,8 @@ Crypto payments for cosmetics can be added via a compliant third-party provider 
 
 **Backend environment variables (secret — never expose to frontend):**
 - `CRYPTO_PROVIDER=provider_name`
-- `CRYPTO_API_KEY=your_provider_api_key`
-- `CRYPTO_WEBHOOK_SECRET=your_provider_webhook_secret`
+- `CRYPTO_API_KEY=replace_me`
+- `CRYPTO_WEBHOOK_SECRET=replace_me`
 
 **Implementation rules:**
 - All crypto payment logic must live **backend-only**. No wallet addresses, private keys, or API keys in frontend code or `VITE_*` variables.

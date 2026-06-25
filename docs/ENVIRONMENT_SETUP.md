@@ -15,8 +15,8 @@ Set these in GitHub repository **Variables** (not Secrets) for the Pages build w
 
 - `VITE_BASE_PATH=/shootazpoker/`
 - `VITE_API_BASE_URL=https://shootazpoker-api.onrender.com`
-- `VITE_APP_NAME=SH0 0TA Poker`
-- `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_or_pk_live_here`
+- `VITE_APP_NAME=ShootazPokerHouse`
+- `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_REPLACE_ME`
 - `VITE_ENABLE_DEMO_PURCHASES=false`
 
 These are baked into the frontend bundle and must be safe to publish.
@@ -27,8 +27,8 @@ Set these in the Render Static Site (`shootazpoker`) environment settings:
 
 - `VITE_BASE_PATH=/`
 - `VITE_API_BASE_URL=https://shootazpoker-api.onrender.com`
-- `VITE_APP_NAME=SH0 0TA Poker`
-- `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_or_pk_live_here`
+- `VITE_APP_NAME=ShootazPokerHouse`
+- `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_REPLACE_ME`
 - `VITE_ENABLE_DEMO_PURCHASES=false`
 
 ## 3) Render Backend Web Service Environment Variables (private where applicable)
@@ -53,15 +53,15 @@ Set these in the Render Web Service (`shootazpoker-api`) environment settings:
 
 ### Optional Square / Cash App Pay (backend only)
 
-- `SQUARE_ACCESS_TOKEN=your_square_access_token`
-- `SQUARE_LOCATION_ID=your_square_location_id`
-- `SQUARE_WEBHOOK_SIGNATURE_KEY=your_square_webhook_sig`
+- `SQUARE_ACCESS_TOKEN=replace_me`
+- `SQUARE_LOCATION_ID=replace_me`
+- `SQUARE_WEBHOOK_SIGNATURE_KEY=replace_me`
 
 ### Optional Crypto Checkout Provider (backend only)
 
-- `CRYPTO_PROVIDER=your_provider_name`
-- `CRYPTO_API_KEY=your_provider_api_key`
-- `CRYPTO_WEBHOOK_SECRET=your_provider_webhook_secret`
+- `CRYPTO_PROVIDER=replace_me`
+- `CRYPTO_API_KEY=replace_me`
+- `CRYPTO_WEBHOOK_SECRET=replace_me`
 
 ## 4) Security Warnings
 

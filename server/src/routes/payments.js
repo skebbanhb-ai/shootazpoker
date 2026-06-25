@@ -25,7 +25,12 @@ function isStripeConfigured(secretKey) {
 }
 
 function buildPublicBaseUrl() {
-  return process.env.PUBLIC_BASE_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+  if (process.env.PUBLIC_BASE_URL) return process.env.PUBLIC_BASE_URL;
+  if (process.env.CLIENT_ORIGIN) {
+    const firstOrigin = process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim()).find(Boolean);
+    if (firstOrigin) return firstOrigin;
+  }
+  return 'http://localhost:5173';
 }
 
 function validateCosmeticItem(item) {
@@ -39,12 +44,13 @@ function validateCosmeticItem(item) {
 }
 
 paymentRouter.post('/checkout/cosmetic', async (req, res) => {
-  const { userId, itemId } = req.body || {};
-  if (!userId || !itemId) {
-    return res.status(400).json({ error: 'userId and itemId are required' });
+  const { userId, itemId, bundleId } = req.body || {};
+  const targetId = itemId || bundleId;
+  if (!userId || !targetId) {
+    return res.status(400).json({ error: 'userId and itemId (or bundleId) are required' });
   }
 
-  const item = cosmeticsCatalog.find((candidate) => candidate.id === itemId);
+  const item = cosmeticsCatalog.find((candidate) => candidate.id === targetId);
   if (!item) {
     return res.status(404).json({ error: 'Item not found' });
   }
@@ -59,7 +65,7 @@ paymentRouter.post('/checkout/cosmetic', async (req, res) => {
   if (!isStripeConfigured(secretKey)) {
     return res
       .status(503)
-      .json({ error: 'Checkout is not configured yet. Add Stripe keys on Render.' });
+      .json({ error: 'Checkout is not configured yet. Please try again later.' });
   }
 
   try {
@@ -89,7 +95,7 @@ paymentRouter.post('/checkout/cosmetic', async (req, res) => {
       ],
       metadata: {
         userId,
-        itemId,
+        itemId: targetId,
         purchaseType: 'cosmetic',
         affectsGameplay: 'false',
         affectsOdds: 'false',

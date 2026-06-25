@@ -54,7 +54,7 @@ Verify the backend is running:
 curl -i https://shootazpoker-api.onrender.com/health
 ```
 
-Expected: HTTP 200 with `{"ok":true,"app":"SH0 0TA Poker Creator League API"}`
+Expected: HTTP 200 with `{"ok":true,"app":"ShootazPokerHouse Creator League API"}`
 
 If this fails, check:
 1. The Render Web Service `shootazpoker-api` is deployed and running

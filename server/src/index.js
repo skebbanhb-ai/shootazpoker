@@ -24,7 +24,7 @@ app.use(helmet());
 app.use(cors({ origin: allowedOrigins.length > 0 ? allowedOrigins : false }));
 app.use(express.json());
 
-app.get('/health', (_, res) => res.json({ ok: true, app: 'SH0 0TA Poker Creator League API' }));
+app.get('/health', (_, res) => res.json({ ok: true, app: 'ShootazPokerHouse Creator League API' }));
 app.use('/auth', authRouter);
 app.use('/wallet', walletRouter);
 app.use('/tournaments', tournamentRouter);
@@ -53,4 +53,4 @@ await attachRedisAdapter();
 createGameSocket(io);
 
 const port = Number(process.env.PORT || 3000);
-server.listen(port, () => console.log(`🔥 SH0 0TA Poker Creator League API running on ${port}`));
+server.listen(port, () => console.log(`🔥 ShootazPokerHouse Creator League API running on ${port}`));
