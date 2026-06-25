@@ -57,8 +57,9 @@ shopRouter.post('/purchase', (req, res) => {
   if (!userId) return res.status(400).json({ error: 'userId is required' });
   const item = cosmeticsCatalog.find((candidate) => candidate.id === itemId);
   const user = users.get(userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
   if (!item) return res.status(404).json({ error: 'Item not found' });
-  if (user) ensureUserCosmetics(userId);
+  ensureUserCosmetics(userId);
 
   try {
     assertCosmeticOnlyPurchase(item);
@@ -84,7 +85,7 @@ shopRouter.post('/purchase', (req, res) => {
     });
   }
 
-  if (item.grantsVip && user) {
+  if (item.grantsVip) {
     user.vip = true;
   }
 
@@ -111,6 +112,8 @@ shopRouter.post('/equip', (req, res) => {
   const item = cosmeticsCatalog.find((candidate) => candidate.id === itemId);
   if (!item) return res.status(404).json({ error: 'Item not found' });
   if (!EQUIP_SLOTS.has(item.slot)) return res.status(400).json({ error: 'Item cannot be equipped' });
+  const user = users.get(userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
 
   const { inventory, equipped } = ensureUserCosmetics(userId);
   if (!inventory.includes(itemId)) return res.status(403).json({ error: 'Item is not owned' });
@@ -118,8 +121,7 @@ shopRouter.post('/equip', (req, res) => {
   equipped[item.slot] = itemId;
   equippedCosmetics.set(userId, equipped);
 
-  const user = users.get(userId);
-  if (user && item.grantsVip) user.vip = true;
+  if (item.grantsVip) user.vip = true;
 
   return res.json({
     ok: true,

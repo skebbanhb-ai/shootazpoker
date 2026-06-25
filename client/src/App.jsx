@@ -40,6 +40,7 @@ const DEFAULT_COSMETICS = {
     emote: null,
   },
 };
+const LOCAL_FREE_ITEM_IDS = new Set(AVATAR_PRESETS.map((preset) => preset.id));
 
 function slug(value) {
   return (value || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -51,14 +52,14 @@ function readStoredCosmetics() {
     const raw = window.localStorage.getItem(COSMETICS_STORAGE_KEY);
     if (!raw) return DEFAULT_COSMETICS;
     const parsed = JSON.parse(raw);
+    const trustedOwned = (parsed.ownedItemIds || []).filter((id) => LOCAL_FREE_ITEM_IDS.has(id));
+    const ownedItemIds = Array.from(new Set([...trustedOwned, ...DEFAULT_COSMETICS.ownedItemIds]));
+    const equipped = { ...DEFAULT_COSMETICS.equipped, ...(parsed.equipped || {}) };
     return {
       ...DEFAULT_COSMETICS,
       ...parsed,
-      ownedItemIds: Array.from(new Set([...(parsed.ownedItemIds || []), ...DEFAULT_COSMETICS.ownedItemIds])),
-      equipped: {
-        ...DEFAULT_COSMETICS.equipped,
-        ...(parsed.equipped || {}),
-      },
+      ownedItemIds,
+      equipped: sanitizeEquipped(ownedItemIds, equipped),
     };
   } catch {
     return DEFAULT_COSMETICS;
@@ -99,7 +100,8 @@ function itemNameById(catalogIndex, id, fallback = 'None') {
 }
 
 function withPaymentParamRemoved(params) {
-  return `${window.location.pathname}${params.size ? `?${params}` : ''}`;
+  const query = params.toString();
+  return `${window.location.pathname}${query ? `?${query}` : ''}`;
 }
 
 function mergeEquipped(remote = {}, local = {}) {
@@ -108,6 +110,17 @@ function mergeEquipped(remote = {}, local = {}) {
     if (localValue) merged[slot] = localValue;
   }
   return merged;
+}
+
+function sanitizeEquipped(ownedItemIds, equipped = {}) {
+  const owned = new Set(ownedItemIds || []);
+  const next = { ...DEFAULT_COSMETICS.equipped, ...equipped };
+  for (const [slot, value] of Object.entries(next)) {
+    if (!value) continue;
+    if (slot === 'avatar' && LOCAL_FREE_ITEM_IDS.has(value)) continue;
+    if (!owned.has(value)) next[slot] = null;
+  }
+  return next;
 }
 
 function TableTab({ table, name, join, ev, log, cosmetics }) {
@@ -352,7 +365,10 @@ export default function App() {
           userId: user.id,
           displayName: user.name || prev.displayName,
           ownedItemIds: Array.from(new Set([...(inventory.ownedItemIds || []), ...(prev.ownedItemIds || [])])),
-          equipped: mergeEquipped(inventory.equipped, prev.equipped),
+          equipped: sanitizeEquipped(
+            Array.from(new Set([...(inventory.ownedItemIds || []), ...(prev.ownedItemIds || [])])),
+            mergeEquipped(inventory.equipped, prev.equipped),
+          ),
         }));
       })
       .catch(() => {});
@@ -387,6 +403,7 @@ export default function App() {
   const join = (cosmeticProfile = {}) =>
     socket.emit('table:join', {
       name,
+      userId: user?.id,
       cosmeticProfile,
     });
 

@@ -1,5 +1,6 @@
 import { PokerTable } from '../game/engine.js';
 import { verifyShuffle } from '../services/fairness.js';
+import { cosmeticsCatalog, ensureUserCosmetics, users } from '../stores/memoryStore.js';
 
 const tables = new Map();
 const main = new PokerTable({ id: 'main-free', mode: 'FREE_PLAY' });
@@ -7,21 +8,25 @@ tables.set(main.id, main);
 
 export function createGameSocket(io) {
   io.on('connection', (socket) => {
-    socket.on('table:join', ({ tableId = 'main-free', name = 'Shooter', cosmeticProfile = {} } = {}) => {
+    socket.on(
+      'table:join',
+      ({ tableId = 'main-free', name = 'Shooter', userId = null, cosmeticProfile = {} } = {}) => {
       const table = tables.get(tableId) || main;
+      const safeProfile = sanitizeCosmeticProfile(userId, cosmeticProfile);
       socket.join(table.id);
       table.addPlayer({
         id: socket.id,
         name,
-        avatar: cosmeticProfile.avatar,
-        avatarFrame: cosmeticProfile.avatarFrame,
-        badge: cosmeticProfile.badge,
-        cardBack: cosmeticProfile.cardBack,
-        tableSkin: cosmeticProfile.tableSkin,
-        vip: Boolean(cosmeticProfile.vip),
+        avatar: safeProfile.avatar,
+        avatarFrame: safeProfile.avatarFrame,
+        badge: safeProfile.badge,
+        cardBack: safeProfile.cardBack,
+        tableSkin: safeProfile.tableSkin,
+        vip: Boolean(safeProfile.vip),
       });
       emit(io, table);
-    });
+    },
+    );
 
     socket.on('hand:start', ({ tableId = 'main-free', clientSeed = socket.id } = {}) => {
       const table = tables.get(tableId);
@@ -78,4 +83,24 @@ export function createGameSocket(io) {
 function emit(io, table) {
   if (!table) return;
   for (const player of table.players) io.to(player.id).emit('table:update', table.publicState(player.id));
+}
+
+function sanitizeCosmeticProfile(userId, cosmeticProfile = {}) {
+  if (!userId || !users.has(userId)) return {};
+  const { inventory } = ensureUserCosmetics(userId);
+  const owned = new Set(inventory);
+  const byId = new Map(cosmeticsCatalog.map((item) => [item.id, item]));
+  const safe = {};
+
+  const slots = ['avatar', 'avatarFrame', 'badge', 'cardBack', 'tableSkin', 'emote'];
+  for (const slot of slots) {
+    const itemId = cosmeticProfile[slot];
+    if (!itemId || !owned.has(itemId)) continue;
+    const item = byId.get(itemId);
+    if (!item || item.slot !== slot) continue;
+    safe[slot] = itemId;
+  }
+
+  safe.vip = safe.badge === 'vip-monthly' || users.get(userId)?.vip === true;
+  return safe;
 }

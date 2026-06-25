@@ -312,6 +312,12 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .seat-active {
+    animation: none;
+  }
+}
+
 .seat-folded {
   opacity: 0.45;
   filter: grayscale(0.5);
