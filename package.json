@@ -1,0 +1,11 @@
+{
+  "name": "sh0-0ta-poker-sponsored-creator-league",
+  "private": true,
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
+    "test": "npm test -w server",
+    "lint": "echo Add ESLint config"
+  },
+  "devDependencies": { "concurrently": "^9.0.0" }
+}
