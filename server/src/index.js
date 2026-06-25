@@ -16,7 +16,7 @@ import { adminRouter } from './routes/admin.js';
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || '*' }));
+app.use(cors({ origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : false }));
 app.use(express.json());
 
 app.get('/health', (_, res) => res.json({ ok: true, app: 'SH0 0TA Poker Creator League API' }));
@@ -28,7 +28,7 @@ app.use('/shop', shopRouter);
 app.use('/admin', adminRouter);
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: process.env.CLIENT_ORIGIN || '*' } });
+const io = new Server(server, { cors: { origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : false } });
 
 async function attachRedisAdapter() {
   if (!process.env.REDIS_URL) return;
