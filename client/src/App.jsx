@@ -900,9 +900,10 @@ export default function App() {
       if (ENABLE_DEMO_PURCHASES) {
         await runDemoPurchase(userId, itemId);
         return;
+      } else {
+        appendLog('Checkout is not configured yet. Please try again later.');
+        return;
       }
-      appendLog('Checkout is not configured yet. Please try again later.');
-      return;
     }
 
     appendLog('Checkout could not be started. Try again in a moment.');

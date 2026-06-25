@@ -40,7 +40,7 @@ Square and Cash App Pay can be added as an alternative cosmetic checkout provide
 **Backend environment variables (secret — never expose to frontend):**
 - `SQUARE_ACCESS_TOKEN=replace_me`
 - `SQUARE_LOCATION_ID=replace_me`
-- `SQUARE_WEBHOOK_SIGNATURE_KEY=replace_menature_key`
+- `SQUARE_WEBHOOK_SIGNATURE_KEY=replace_me`
 
 **Implementation guidance:**
 - Use the Square Checkout API to create a payment link for cosmetic items.
