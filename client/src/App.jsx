@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
+  AlertCircle,
+  CheckCircle2,
+  CircleDashed,
   Crown,
   Flame,
   LayoutDashboard,
+  LoaderCircle,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -13,6 +17,7 @@ import {
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const COSMETICS_VERSION = 'v1';
 const socket = io(API);
 const MAX_SEATS = 6;
 const COSMETICS_STORAGE_KEY = 'shootaz-cosmetics-v1';
@@ -76,23 +81,41 @@ function readStoredCosmetics() {
 
 function Card({ c, cardTheme }) {
   const hidden = c === '🂠';
-  const red = c?.includes('H') || c?.includes('D');
+  const red = c?.includes('H') || c?.includes('D') || c?.includes('♥') || c?.includes('♦');
+  const rank = hidden ? '' : c?.slice(0, -1);
+  const suit = hidden ? '' : c?.slice(-1);
   return (
     <span className={`cardx ${red ? 'red' : ''} ${hidden ? 'is-hidden' : ''} theme-${slug(cardTheme)}`}>
-      {hidden ? '🂠' : c}
+      {hidden ? (
+        <span className="card-back-mark">SH0 0TA</span>
+      ) : (
+        <>
+          <span className="card-rank">{rank}</span>
+          <span className="card-suit">{suit}</span>
+        </>
+      )}
     </span>
   );
 }
 
 function useApi(path, initial = []) {
   const [data, setData] = useState(initial);
-  const load = () =>
-    fetch(API + path)
-      .then((r) => r.json())
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const load = () => {
+    setLoading(true);
+    setError('');
+    return fetch(API + path)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to load ${path}`);
+        return r.json();
+      })
       .then(setData)
-      .catch(() => {});
+      .catch(() => setError('Service temporarily unavailable. Please try again in a moment.'))
+      .finally(() => setLoading(false));
+  };
   useEffect(load, []);
-  return [data, load, setData];
+  return [data, load, setData, { error, loading }];
 }
 
 function buildSeatData(players = [], maxSeats = MAX_SEATS) {
@@ -131,16 +154,50 @@ function sanitizeEquipped(ownedItemIds, equipped = {}) {
   return next;
 }
 
-function TableTab({ table, name, join, ev, log, cosmetics, catalogIndex }) {
+function TableTab({
+  table,
+  name,
+  join,
+  ev,
+  log,
+  cosmetics,
+  catalogIndex,
+  connectionState,
+  apiError,
+  retryApi,
+}) {
   const players = table?.players || [];
   const seats = useMemo(() => buildSeatData(players), [players]);
   const currentTurnName = players[table?.turn]?.name || 'Waiting for hand start';
   const tableSkin = cosmetics?.equipped?.tableSkin;
   const cardBack = cosmetics?.equipped?.cardBack;
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+  const [raiseAmount, setRaiseAmount] = useState(50);
+  const selectedPlayer = players.find((player) => player.id === selectedPlayerId);
 
   return (
     <div className="table-layout">
       <section className="panel p-4 md:p-5">
+        <div className={`connection-pill ${connectionState}`}>
+          {connectionState === 'connected' ? <CheckCircle2 size={14} /> : null}
+          {connectionState === 'connecting' ? <LoaderCircle size={14} className="spin" /> : null}
+          {connectionState === 'sleeping' ? <CircleDashed size={14} /> : null}
+          {connectionState === 'error' ? <AlertCircle size={14} /> : null}
+          <span>
+            {connectionState === 'connected' && 'Connected'}
+            {connectionState === 'connecting' && 'Connecting...'}
+            {connectionState === 'sleeping' && 'Backend sleeping / retrying...'}
+            {connectionState === 'error' && 'Connection unavailable'}
+          </span>
+        </div>
+        {apiError ? (
+          <div className="api-error-banner">
+            {apiError}
+            <button className="btn dark ml-2" onClick={retryApi}>
+              Retry
+            </button>
+          </div>
+        ) : null}
         <div className="premium-table-wrap">
           <div className={`table-felt skin-${slug(tableSkin)}`}>
             <div className="table-center">
@@ -175,20 +232,25 @@ function TableTab({ table, name, join, ev, log, cosmetics, catalogIndex }) {
                 <article key={player?.id || `empty-${index}`} className={seatClass}>
                   {player ? (
                     <>
-                      <div className="seat-headline">
+                      <button className="seat-headline" onClick={() => setSelectedPlayerId(player.id)}>
                         <b>
                           {player.name}
                           {player.vip ? <span className="seat-badge vip">VIP</span> : null}
                           {player.badge === 'founder-badge' ? <span className="seat-badge founder">Founder</span> : null}
                         </b>
                         {isFolded ? <span className="seat-tag">Folded</span> : null}
-                      </div>
+                      </button>
                       <div className={`avatar-ring frame-${slug(player.avatarFrame)}`}>
                         <span className="avatar-icon" role="img" aria-label="player-avatar">
                           {avatar}
                         </span>
                       </div>
                       <p className="muted text-xs">Stack: {player.chips} chips</p>
+                      <div className="chip-stack" aria-hidden="true">
+                        {Array.from({ length: Math.max(1, Math.min(5, Math.ceil(player.chips / 250))) }, (_, chipIndex) => (
+                          <span key={chipIndex} className="chip" />
+                        ))}
+                      </div>
                       <p className="muted text-xs">Bet: {player.currentBet || 0}</p>
                       {(player.watch || player.chain || player.vehicle || player.home) && (
                         <p className="muted text-xs seat-lifestyle">
@@ -218,10 +280,22 @@ function TableTab({ table, name, join, ev, log, cosmetics, catalogIndex }) {
                 </article>
               );
             })}
+            {selectedPlayer ? (
+              <aside className="player-profile-card">
+                <h4>{selectedPlayer.name}</h4>
+                <p className="muted text-xs">Avatar: {avatarById(selectedPlayer.avatar).name}</p>
+                <p className="muted text-xs">Outfit: {itemNameById(catalogIndex, selectedPlayer.outfit, 'Default')}</p>
+                <p className="muted text-xs">Background: {itemNameById(catalogIndex, selectedPlayer.background, 'Default')}</p>
+                <p className="muted text-xs">Frame: {itemNameById(catalogIndex, selectedPlayer.avatarFrame, 'None')}</p>
+                <button className="btn dark mt-2" onClick={() => setSelectedPlayerId(null)}>
+                  Close
+                </button>
+              </aside>
+            ) : null}
           </div>
         </div>
 
-        <div className="controls-grid mt-4">
+        <div className="action-bar mt-4">
           <button
             className="btn gold"
             onClick={() =>
@@ -256,9 +330,18 @@ function TableTab({ table, name, join, ev, log, cosmetics, catalogIndex }) {
           <button className="btn redbtn" onClick={() => ev('action:fold')}>
             Fold
           </button>
-          <button className="btn dark" onClick={() => ev('action:raise', { amount: 50 })}>
-            Raise 50
-          </button>
+          <div className="raise-wrap">
+            <input
+              type="number"
+              className="input raise-input"
+              min={table?.minimumRaise || 1}
+              value={raiseAmount}
+              onChange={(event) => setRaiseAmount(Number(event.target.value) || 0)}
+            />
+            <button className="btn dark" onClick={() => ev('action:raise', { amount: raiseAmount })}>
+              Raise
+            </button>
+          </div>
           <button className="btn dark" onClick={() => ev('street:next')}>
             Next Street
           </button>
@@ -290,6 +373,10 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }
 
   return (
     <Panel title="Customize Profile" icon={<Sparkles />}>
+      <p className="muted text-sm">
+        Culture &amp; Luxury Lifestyle Cosmetics {COSMETICS_VERSION} — expressive style only, never gameplay
+        advantage.
+      </p>
       <div className="customize-sections">
         {/* Profile Overview */}
         <div className="panel p-4 customize-section">
@@ -443,18 +530,38 @@ export default function App() {
   const [paymentBanner, setPaymentBanner] = useState('');
   const [shopCategory, setShopCategory] = useState('all');
   const [cosmetics, setCosmetics] = useState(readStoredCosmetics);
+  const [connectionState, setConnectionState] = useState('connecting');
 
-  const [tours, loadTours] = useApi('/tournaments');
-  const [leagues, loadLeagues] = useApi('/leagues');
-  const [shopData, loadShop] = useApi('/shop/catalog', { categories: {} });
-  const [admin, loadAdmin] = useApi('/admin/dashboard', {});
+  const [tours, loadTours, , toursMeta] = useApi('/tournaments');
+  const [leagues, loadLeagues, , leaguesMeta] = useApi('/leagues');
+  const [shopData, loadShop, , shopMeta] = useApi('/shop/catalog', { categories: {} });
+  const [admin, loadAdmin, , adminMeta] = useApi('/admin/dashboard', {});
+
+  const appendLog = (entry) => {
+    setLog((items) => [`${new Date().toLocaleTimeString()} · ${entry}`, ...items.slice(0, 39)]);
+  };
 
   useEffect(() => {
-    socket.on('table:update', setTable);
-    socket.on('hand:result', (result) =>
-      setLog((items) => [`Winner: ${result.winnerName}. Fairness seed revealed.`, ...items]),
-    );
-    socket.on('error:game', (message) => setLog((items) => [message, ...items]));
+    socket.on('connect', () => {
+      setConnectionState('connected');
+      appendLog('Connected to game server.');
+    });
+    socket.on('disconnect', () => {
+      setConnectionState('sleeping');
+      appendLog('Connection dropped. Retrying...');
+    });
+    socket.on('connect_error', () => {
+      setConnectionState((prev) => (prev === 'connected' ? 'connecting' : 'sleeping'));
+    });
+    socket.on('table:update', (payload) => {
+      setConnectionState('connected');
+      setTable(payload);
+    });
+    socket.on('hand:result', (result) => appendLog(`Winner: ${result.winnerName}. Fairness seed revealed.`));
+    socket.on('error:game', (message) => {
+      setConnectionState('error');
+      appendLog(message);
+    });
     return () => socket.off();
   }, []);
 
@@ -554,7 +661,7 @@ export default function App() {
       body: JSON.stringify(body),
     });
     const json = await response.json();
-    setLog((items) => [json.error || json.disclosure || 'Success', ...items]);
+    appendLog(json.error || json.disclosure || 'Success');
     loadTours();
     loadLeagues();
     loadAdmin();
@@ -599,7 +706,7 @@ export default function App() {
       }
 
       if (checkout?.error) {
-        setLog((items) => [checkout.error, ...items]);
+        appendLog(checkout.error);
         return;
       }
     } catch {
@@ -607,7 +714,7 @@ export default function App() {
       return;
     }
 
-    setLog((items) => ['Checkout could not be started. Try again in a moment.', ...items]);
+    appendLog('Checkout could not be started. Try again in a moment.');
   }
 
   async function equipItem(itemId) {
@@ -668,6 +775,14 @@ export default function App() {
             log={log}
             cosmetics={cosmetics}
             catalogIndex={catalogIndex}
+            connectionState={connectionState}
+            apiError={shopMeta.error || toursMeta.error || leaguesMeta.error || adminMeta.error}
+            retryApi={() => {
+              loadTours();
+              loadLeagues();
+              loadShop();
+              loadAdmin();
+            }}
           />
         )}
 
@@ -825,15 +940,17 @@ function Aside({ table, log }) {
         {table?.fairness?.serverSeedHash || 'Start a hand to show commit hash.'}
       </p>
       <h3 className="font-black mt-5">Game Log</h3>
-      {log.length ? (
-        log.map((entry, index) => (
-          <p className="muted text-sm" key={index}>
-            {entry}
-          </p>
-        ))
-      ) : (
-        <p className="muted text-sm">No events yet.</p>
-      )}
+      <div className="game-log-list">
+        {log.length ? (
+          log.map((entry, index) => (
+            <p className="muted text-sm game-log-entry" key={index}>
+              {entry}
+            </p>
+          ))
+        ) : (
+          <p className="muted text-sm">No events yet.</p>
+        )}
+      </div>
     </aside>
   );
 }

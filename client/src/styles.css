@@ -54,6 +54,7 @@ body {
 
 .cardx {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 48px;
@@ -65,6 +66,25 @@ body {
   margin: 2px;
   border: 1px solid #d8cbbe;
   box-shadow: 0 8px 16px #0005;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-rank {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.card-suit {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.card-back-mark {
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+  font-weight: 900;
+  opacity: 0.95;
 }
 
 .cardx.theme-gold-card-back {
@@ -132,6 +152,53 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 1rem;
+}
+
+.connection-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-bottom: 0.6rem;
+  border: 1px solid #ffffff29;
+}
+
+.connection-pill.connected {
+  background: #0f3f2a;
+  color: #9ff4bd;
+}
+
+.connection-pill.connecting {
+  background: #2f273b;
+  color: #d8c1ff;
+}
+
+.connection-pill.sleeping,
+.connection-pill.error {
+  background: #42202b;
+  color: #ffd6df;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.api-error-banner {
+  margin-bottom: 0.7rem;
+  border-radius: 12px;
+  border: 1px solid #ff8da1;
+  background: #5a1a2a66;
+  color: #ffe8ed;
+  padding: 0.6rem 0.8rem;
 }
 
 .premium-table-wrap {
@@ -229,6 +296,12 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 0.35rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .seat-badge {
@@ -299,17 +372,62 @@ body {
 
 .seat-active {
   border-color: #f7d373;
-  box-shadow: 0 0 0 2px #f7d37366, 0 0 24px #f7d37388;
-  animation: active-seat-glow 1.3s ease-in-out infinite alternate;
+  box-shadow: 0 0 0 2px #f7d37366, 0 0 28px #f7d373a8, inset 0 0 16px #f7d37333;
+  animation: active-seat-glow 1s ease-in-out infinite alternate;
 }
 
 @keyframes active-seat-glow {
   from {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
   to {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.01);
   }
+}
+
+.chip-stack {
+  display: flex;
+  gap: 0.16rem;
+  margin: 0.2rem 0;
+}
+
+.chip {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #ffe899 0%, #d9a72f 60%, #8a5f14 100%);
+  border: 1px solid #f9dc84aa;
+  box-shadow: 0 2px 6px #0007;
+}
+
+.player-profile-card {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 5;
+  width: 200px;
+  border-radius: 14px;
+  border: 1px solid #ffffff2c;
+  background: linear-gradient(180deg, #1e1723, #110d15);
+  padding: 0.65rem;
+  box-shadow: 0 14px 36px #0009;
+}
+
+.action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.raise-wrap {
+  display: flex;
+  gap: 0.35rem;
+  grid-column: span 2;
+}
+
+.raise-input {
+  width: 100%;
+  min-width: 84px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -471,6 +589,20 @@ body {
   margin-top: 0.5rem;
 }
 
+.game-log-list {
+  margin-top: 0.5rem;
+  max-height: 300px;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.game-log-entry {
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  margin-bottom: 0.25rem;
+  background: #ffffff0a;
+}
+
 @media (max-width: 1100px) {
   .table-layout {
     grid-template-columns: 1fr;
@@ -525,6 +657,21 @@ body {
 
   .controls-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .action-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .raise-wrap {
+    grid-column: span 2;
+  }
+
+  .player-profile-card {
+    width: calc(100% - 2rem);
+    right: 1rem;
+    top: auto;
+    bottom: 1rem;
   }
 }
 
