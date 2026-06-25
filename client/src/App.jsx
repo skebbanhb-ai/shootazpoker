@@ -33,12 +33,19 @@ const DEFAULT_COSMETICS = {
   displayName: 'Shooter',
   ownedItemIds: AVATAR_PRESETS.map((preset) => preset.id),
   equipped: {
+    avatar: AVATAR_PRESETS[0].id,
     cardBack: null,
     tableSkin: null,
     avatarFrame: null,
     badge: null,
-    avatar: AVATAR_PRESETS[0].id,
     emote: null,
+    watch: null,
+    chain: null,
+    ring: null,
+    vehicle: null,
+    home: null,
+    outfit: null,
+    background: null,
   },
 };
 const LOCAL_FREE_ITEM_IDS = new Set(AVATAR_PRESETS.map((preset) => preset.id));
@@ -124,7 +131,7 @@ function sanitizeEquipped(ownedItemIds, equipped = {}) {
   return next;
 }
 
-function TableTab({ table, name, join, ev, log, cosmetics }) {
+function TableTab({ table, name, join, ev, log, cosmetics, catalogIndex }) {
   const players = table?.players || [];
   const seats = useMemo(() => buildSeatData(players), [players]);
   const currentTurnName = players[table?.turn]?.name || 'Waiting for hand start';
@@ -183,6 +190,17 @@ function TableTab({ table, name, join, ev, log, cosmetics }) {
                       </div>
                       <p className="muted text-xs">Stack: {player.chips} chips</p>
                       <p className="muted text-xs">Bet: {player.currentBet || 0}</p>
+                      {(player.watch || player.chain || player.vehicle || player.home) && (
+                        <p className="muted text-xs seat-lifestyle">
+                          {player.watch ? `⌚ ${itemNameById(catalogIndex, player.watch, 'Watch')}` : ''}
+                          {player.watch && player.chain ? ' · ' : ''}
+                          {player.chain ? `⛓ ${itemNameById(catalogIndex, player.chain, 'Chain')}` : ''}
+                          {(player.watch || player.chain) && (player.vehicle || player.home) ? ' · ' : ''}
+                          {player.vehicle ? `🚘 ${itemNameById(catalogIndex, player.vehicle, 'Vehicle')}` : ''}
+                          {player.vehicle && player.home ? ' · ' : ''}
+                          {player.home ? `🏠 ${itemNameById(catalogIndex, player.home, 'Home')}` : ''}
+                        </p>
+                      )}
                       <div className="seat-cards">
                         {(player.cards || ['🂠', '🂠']).map((card, cardIndex) => (
                           <Card key={cardIndex} c={card} cardTheme={player.cardBack || cardBack} />
@@ -213,7 +231,14 @@ function TableTab({ table, name, join, ev, log, cosmetics }) {
                 badge: cosmetics?.equipped?.badge,
                 cardBack: cosmetics?.equipped?.cardBack,
                 tableSkin: cosmetics?.equipped?.tableSkin,
-                vip: cosmetics?.equipped?.badge === 'vip-monthly',
+                watch: cosmetics?.equipped?.watch,
+                chain: cosmetics?.equipped?.chain,
+                ring: cosmetics?.equipped?.ring,
+                vehicle: cosmetics?.equipped?.vehicle,
+                home: cosmetics?.equipped?.home,
+                outfit: cosmetics?.equipped?.outfit,
+                background: cosmetics?.equipped?.background,
+                vip: cosmetics?.equipped?.badge === 'badge-vip-monthly',
               })
             }
           >
@@ -635,7 +660,15 @@ export default function App() {
         </nav>
 
         {tab === 'table' && (
-          <TableTab table={table} name={name} join={join} ev={ev} log={log} cosmetics={cosmetics} />
+          <TableTab
+            table={table}
+            name={name}
+            join={join}
+            ev={ev}
+            log={log}
+            cosmetics={cosmetics}
+            catalogIndex={catalogIndex}
+          />
         )}
 
         {tab === 'tournaments' && (

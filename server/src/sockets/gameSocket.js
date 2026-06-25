@@ -22,6 +22,13 @@ export function createGameSocket(io) {
         badge: safeProfile.badge,
         cardBack: safeProfile.cardBack,
         tableSkin: safeProfile.tableSkin,
+        watch: safeProfile.watch,
+        chain: safeProfile.chain,
+        ring: safeProfile.ring,
+        vehicle: safeProfile.vehicle,
+        home: safeProfile.home,
+        outfit: safeProfile.outfit,
+        background: safeProfile.background,
         vip: Boolean(safeProfile.vip),
       });
       emit(io, table);
@@ -92,7 +99,21 @@ function sanitizeCosmeticProfile(userId, cosmeticProfile = {}) {
   const byId = new Map(cosmeticsCatalog.map((item) => [item.id, item]));
   const safe = {};
 
-  const slots = ['avatar', 'avatarFrame', 'badge', 'cardBack', 'tableSkin', 'emote'];
+  const slots = [
+    'avatar',
+    'avatarFrame',
+    'badge',
+    'cardBack',
+    'tableSkin',
+    'emote',
+    'watch',
+    'chain',
+    'ring',
+    'vehicle',
+    'home',
+    'outfit',
+    'background',
+  ];
   for (const slot of slots) {
     const itemId = cosmeticProfile[slot];
     if (!itemId || !owned.has(itemId)) continue;
@@ -101,6 +122,8 @@ function sanitizeCosmeticProfile(userId, cosmeticProfile = {}) {
     safe[slot] = itemId;
   }
 
-  safe.vip = (safe.badge === 'vip-monthly' && owned.has('vip-monthly')) || users.get(userId)?.vip === true;
+  safe.vip =
+    (safe.badge === 'badge-vip-monthly' && owned.has('badge-vip-monthly')) ||
+    users.get(userId)?.vip === true;
   return safe;
 }

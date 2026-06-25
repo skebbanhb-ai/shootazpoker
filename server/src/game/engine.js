@@ -30,6 +30,13 @@ export class PokerTable {
     badge = null,
     cardBack = null,
     tableSkin = null,
+    watch = null,
+    chain = null,
+    ring = null,
+    vehicle = null,
+    home = null,
+    outfit = null,
+    background = null,
     vip = false,
   }) {
     if (!this.players.some((player) => player.id === id)) {
@@ -46,6 +53,13 @@ export class PokerTable {
         badge,
         cardBack,
         tableSkin,
+        watch,
+        chain,
+        ring,
+        vehicle,
+        home,
+        outfit,
+        background,
         vip,
       });
     }
