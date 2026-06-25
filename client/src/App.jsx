@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Trophy,
   User,
 } from 'lucide-react';
@@ -13,10 +14,65 @@ import {
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const socket = io(API);
 const MAX_SEATS = 6;
+const COSMETICS_STORAGE_KEY = 'shootaz-cosmetics-v1';
 
-function Card({ c }) {
+const AVATAR_PRESETS = [
+  { id: 'avatar-gold-shooter', name: 'Gold Shooter', icon: '🥇' },
+  { id: 'avatar-royal-player', name: 'Royal Player', icon: '👑' },
+  { id: 'avatar-neon-ace', name: 'Neon Ace', icon: '🎯' },
+  { id: 'avatar-h-town-legend', name: 'H-Town Legend', icon: '🤠' },
+  { id: 'avatar-queen-of-clubs', name: 'Queen of Clubs', icon: '🃛' },
+  { id: 'avatar-spade-king', name: 'Spade King', icon: '♠️' },
+  { id: 'avatar-diamond-boss', name: 'Diamond Boss', icon: '💎' },
+  { id: 'avatar-club-captain', name: 'Club Captain', icon: '♣️' },
+];
+
+const DEFAULT_COSMETICS = {
+  userId: 'demo-user-local',
+  displayName: 'Shooter',
+  ownedItemIds: AVATAR_PRESETS.map((preset) => preset.id),
+  equipped: {
+    cardBack: null,
+    tableSkin: null,
+    avatarFrame: null,
+    badge: null,
+    avatar: AVATAR_PRESETS[0].id,
+    emote: null,
+  },
+};
+
+function slug(value) {
+  return (value || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
+function readStoredCosmetics() {
+  if (typeof window === 'undefined') return DEFAULT_COSMETICS;
+  try {
+    const raw = window.localStorage.getItem(COSMETICS_STORAGE_KEY);
+    if (!raw) return DEFAULT_COSMETICS;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_COSMETICS,
+      ...parsed,
+      ownedItemIds: Array.from(new Set([...(parsed.ownedItemIds || []), ...DEFAULT_COSMETICS.ownedItemIds])),
+      equipped: {
+        ...DEFAULT_COSMETICS.equipped,
+        ...(parsed.equipped || {}),
+      },
+    };
+  } catch {
+    return DEFAULT_COSMETICS;
+  }
+}
+
+function Card({ c, cardTheme }) {
+  const hidden = c === '🂠';
   const red = c?.includes('H') || c?.includes('D');
-  return <span className={`cardx ${red ? 'red' : ''}`}>{c}</span>;
+  return (
+    <span className={`cardx ${red ? 'red' : ''} ${hidden ? 'is-hidden' : ''} theme-${slug(cardTheme)}`}>
+      {hidden ? '🂠' : c}
+    </span>
+  );
 }
 
 function useApi(path, initial = []) {
@@ -34,21 +90,31 @@ function buildSeatData(players = [], maxSeats = MAX_SEATS) {
   return Array.from({ length: maxSeats }, (_, index) => players[index] || null);
 }
 
-function TableTab({ table, name, join, ev, log }) {
+function avatarById(id) {
+  return AVATAR_PRESETS.find((preset) => preset.id === id) || AVATAR_PRESETS[0];
+}
+
+function itemNameById(catalogIndex, id, fallback = 'None') {
+  return catalogIndex.get(id)?.name || fallback;
+}
+
+function TableTab({ table, name, join, ev, log, cosmetics }) {
   const players = table?.players || [];
   const seats = useMemo(() => buildSeatData(players), [players]);
   const currentTurnName = players[table?.turn]?.name || 'Waiting for hand start';
+  const tableSkin = cosmetics?.equipped?.tableSkin;
+  const cardBack = cosmetics?.equipped?.cardBack;
 
   return (
     <div className="table-layout">
       <section className="panel p-4 md:p-5">
         <div className="premium-table-wrap">
-          <div className="table-felt">
+          <div className={`table-felt skin-${slug(tableSkin)}`}>
             <div className="table-center">
               <p className="table-label">Community Cards</p>
               <div className="community-row">
                 {table?.community?.length ? (
-                  table.community.map((c, i) => <Card key={i} c={c} />)
+                  table.community.map((card, index) => <Card key={index} c={card} cardTheme={cardBack} />)
                 ) : (
                   <span className="muted text-sm">No board yet</span>
                 )}
@@ -70,19 +136,34 @@ function TableTab({ table, name, join, ev, log }) {
                 .filter(Boolean)
                 .join(' ');
 
+              const avatar = avatarById(player?.avatar).icon;
+
               return (
                 <article key={player?.id || `empty-${index}`} className={seatClass}>
                   {player ? (
                     <>
                       <div className="seat-headline">
-                        <b>{player.name}</b>
+                        <b>
+                          {player.name}
+                          {player.vip ? <span className="seat-badge vip">VIP</span> : null}
+                          {player.badge === 'founder-badge' ? <span className="seat-badge founder">Founder</span> : null}
+                        </b>
                         {isFolded ? <span className="seat-tag">Folded</span> : null}
+                      </div>
+                      <div className={`avatar-ring frame-${slug(player.avatarFrame)}`}>
+                        <span className="avatar-icon" role="img" aria-label="player-avatar">
+                          {avatar}
+                        </span>
                       </div>
                       <p className="muted text-xs">Stack: {player.chips} chips</p>
                       <p className="muted text-xs">Bet: {player.currentBet || 0}</p>
                       <div className="seat-cards">
-                        {(player.cards || ['🂠', '🂠']).map((c, j) => (
-                          <Card key={j} c={c} />
+                        {(player.cards || ['🂠', '🂠']).map((card, cardIndex) => (
+                          <Card
+                            key={cardIndex}
+                            c={card}
+                            cardTheme={card === '🂠' ? player.cardBack || cardBack : cardBack}
+                          />
                         ))}
                       </div>
                     </>
@@ -91,7 +172,7 @@ function TableTab({ table, name, join, ev, log }) {
                       <div className="empty-seat-icon">
                         <User size={16} />
                       </div>
-                      <p className="muted text-xs">Empty Seat</p>
+                      <p className="muted text-xs">Open Seat</p>
                     </>
                   )}
                 </article>
@@ -101,7 +182,19 @@ function TableTab({ table, name, join, ev, log }) {
         </div>
 
         <div className="controls-grid mt-4">
-          <button className="btn gold" onClick={join}>
+          <button
+            className="btn gold"
+            onClick={() =>
+              join({
+                avatar: cosmetics?.equipped?.avatar,
+                avatarFrame: cosmetics?.equipped?.avatarFrame,
+                badge: cosmetics?.equipped?.badge,
+                cardBack: cosmetics?.equipped?.cardBack,
+                tableSkin: cosmetics?.equipped?.tableSkin,
+                vip: cosmetics?.equipped?.badge === 'vip-monthly',
+              })
+            }
+          >
             Join Table
           </button>
           <button className="btn gold" onClick={() => ev('hand:start', { clientSeed: name })}>
@@ -129,51 +222,223 @@ function TableTab({ table, name, join, ev, log }) {
   );
 }
 
+function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user }) {
+  const selectedAvatar = avatarById(cosmetics.equipped.avatar);
+
+  const ownedNames = cosmetics.ownedItemIds
+    .map((id) => itemNameById(catalogIndex, id, AVATAR_PRESETS.find((a) => a.id === id)?.name || id))
+    .sort();
+
+  return (
+    <Panel title="Customize Profile" icon={<Sparkles />}>
+      <div className="customize-grid">
+        <div className="panel p-4">
+          <h3 className="font-black text-xl">Player Profile</h3>
+          <p className="muted">Display Name: {user?.name || cosmetics.displayName}</p>
+          <div className={`avatar-ring large frame-${slug(cosmetics.equipped.avatarFrame)}`}>
+            <span className="avatar-icon" role="img" aria-label="selected-avatar">
+              {selectedAvatar.icon}
+            </span>
+          </div>
+          <p className="muted">
+            Badge:{' '}
+            {cosmetics.equipped.badge === 'vip-monthly'
+              ? 'VIP'
+              : itemNameById(catalogIndex, cosmetics.equipped.badge, 'None')}
+          </p>
+          <p className="muted">Card Back: {itemNameById(catalogIndex, cosmetics.equipped.cardBack, 'Default')}</p>
+          <p className="muted">Table Skin: {itemNameById(catalogIndex, cosmetics.equipped.tableSkin, 'Default')}</p>
+          <p className="muted">
+            Avatar Frame: {itemNameById(catalogIndex, cosmetics.equipped.avatarFrame, 'Default')}
+          </p>
+          {(cosmetics.equipped.badge === 'vip-monthly' || user?.vip) && (
+            <p className="profile-vip-pill">VIP Member</p>
+          )}
+          <h4 className="font-black mt-4">Owned Cosmetics</h4>
+          <ul className="owned-list">
+            {ownedNames.map((itemName) => (
+              <li key={itemName}>{itemName}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="panel p-4">
+          <h3 className="font-black text-xl">Avatar Styles</h3>
+          <div className="avatar-grid">
+            {AVATAR_PRESETS.map((preset) => {
+              const equipped = cosmetics.equipped.avatar === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  className={`avatar-choice ${equipped ? 'active' : ''}`}
+                  onClick={() =>
+                    setCosmetics((prev) => ({
+                      ...prev,
+                      ownedItemIds: Array.from(new Set([...prev.ownedItemIds, preset.id])),
+                      equipped: { ...prev.equipped, avatar: preset.id },
+                    }))
+                  }
+                >
+                  <span className="avatar-emoji">{preset.icon}</span>
+                  <span>{preset.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState('table');
   const [name, setName] = useState('Shooter');
   const [user, setUser] = useState(null);
   const [table, setTable] = useState(null);
   const [log, setLog] = useState([]);
+  const [paymentBanner, setPaymentBanner] = useState('');
+  const [shopCategory, setShopCategory] = useState('all');
+  const [cosmetics, setCosmetics] = useState(readStoredCosmetics);
+
   const [tours, loadTours] = useApi('/tournaments');
   const [leagues, loadLeagues] = useApi('/leagues');
-  const [shop] = useApi('/shop/catalog');
+  const [shopData, loadShop] = useApi('/shop/catalog', { categories: {} });
   const [admin, loadAdmin] = useApi('/admin/dashboard', {});
 
   useEffect(() => {
     socket.on('table:update', setTable);
-    socket.on('hand:result', (r) =>
-      setLog((x) => [`Winner: ${r.winnerName}. Fairness seed revealed.`, ...x]),
+    socket.on('hand:result', (result) =>
+      setLog((items) => [`Winner: ${result.winnerName}. Fairness seed revealed.`, ...items]),
     );
-    socket.on('error:game', (m) => setLog((x) => [m, ...x]));
+    socket.on('error:game', (message) => setLog((items) => [message, ...items]));
     return () => socket.off();
   }, []);
 
+  useEffect(() => {
+    window.localStorage.setItem(COSMETICS_STORAGE_KEY, JSON.stringify(cosmetics));
+  }, [cosmetics]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    if (payment === 'success') {
+      setPaymentBanner('Purchase successful. Your cosmetic is ready.');
+      params.delete('payment');
+      window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`);
+    }
+    if (payment === 'cancelled') {
+      setPaymentBanner('Checkout cancelled. No purchase was made.');
+      params.delete('payment');
+      window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`${API}/shop/inventory/${user.id}`)
+      .then((response) => response.json())
+      .then((inventory) => {
+        setCosmetics((prev) => ({
+          ...prev,
+          userId: user.id,
+          displayName: user.name || prev.displayName,
+          ownedItemIds: Array.from(new Set([...(inventory.ownedItemIds || []), ...(prev.ownedItemIds || [])])),
+          equipped: {
+            ...inventory.equipped,
+            ...prev.equipped,
+          },
+        }));
+      })
+      .catch(() => {});
+  }, [user?.id]);
+
+  const catalogItems = useMemo(
+    () => Object.values(shopData?.categories || {}).flatMap((items) => items),
+    [shopData],
+  );
+
+  const catalogIndex = useMemo(
+    () => new Map(catalogItems.map((item) => [item.id, item])),
+    [catalogItems],
+  );
+
+  const shopCategories = useMemo(
+    () =>
+      Object.keys(shopData?.categories || {}).filter((category) =>
+        ['cardBacks', 'tableSkins', 'avatarFrames', 'profileBadges', 'emotes', 'vipMembership'].includes(
+          category,
+        ),
+      ),
+    [shopData],
+  );
+
+  const filteredShopItems = useMemo(() => {
+    const source = catalogItems.filter((item) => item.priceCents > 0);
+    if (shopCategory === 'all') return source;
+    return source.filter((item) => item.category === shopCategory);
+  }, [catalogItems, shopCategory]);
+
+  const join = (cosmeticProfile = {}) =>
+    socket.emit('table:join', {
+      name,
+      cosmeticProfile,
+    });
+
+  const ev = (eventName, payload = {}) => socket.emit(eventName, { tableId: 'main-free', ...payload });
+
   async function login() {
-    const r = await fetch(API + '/auth/demo-login', {
+    const response = await fetch(API + '/auth/demo-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     });
-    const j = await r.json();
-    setUser(j.user);
+    const json = await response.json();
+    setUser(json.user);
+    setCosmetics((prev) => ({
+      ...prev,
+      userId: json.user?.id || prev.userId,
+      displayName: json.user?.name || prev.displayName,
+    }));
   }
 
-  const join = () => socket.emit('table:join', { name });
-  const ev = (e, p = {}) => socket.emit(e, { tableId: 'main-free', ...p });
-
   async function post(path, body) {
-    const r = await fetch(API + path, {
+    const response = await fetch(API + path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const j = await r.json();
-    setLog((x) => [j.error || j.disclosure || 'Success', ...x]);
+    const json = await response.json();
+    setLog((items) => [json.error || json.disclosure || 'Success', ...items]);
     loadTours();
     loadLeagues();
     loadAdmin();
-    return j;
+    loadShop();
+    return json;
+  }
+
+  async function buyItem(itemId) {
+    const userId = user?.id || cosmetics.userId;
+    const result = await post('/shop/purchase', { userId, itemId });
+    if (result?.inventory) {
+      setCosmetics((prev) => ({
+        ...prev,
+        userId,
+        ownedItemIds: Array.from(new Set(result.inventory.ownedItemIds || prev.ownedItemIds)),
+        equipped: { ...prev.equipped, ...(result.inventory.equipped || {}) },
+      }));
+    }
+    if (result?.item?.grantsVip) {
+      setUser((prev) => (prev ? { ...prev, vip: true } : prev));
+    }
+  }
+
+  async function equipItem(itemId) {
+    const userId = user?.id || cosmetics.userId;
+    const result = await post('/shop/equip', { userId, itemId });
+    if (result?.equipped) {
+      setCosmetics((prev) => ({ ...prev, userId, equipped: { ...prev.equipped, ...result.equipped } }));
+    }
   }
 
   return (
@@ -189,18 +454,21 @@ export default function App() {
             </p>
           </div>
           <div className="flex gap-2">
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="input" value={name} onChange={(event) => setName(event.target.value)} />
             <button className="btn gold" onClick={login}>
               {user ? 'Logged In' : 'Demo Login'}
             </button>
           </div>
         </header>
 
+        {paymentBanner ? <div className="payment-banner">{paymentBanner}</div> : null}
+
         <nav className="flex flex-wrap gap-2 mb-5">
           {[
             ['table', 'Table', Flame],
             ['tournaments', 'Tournaments', Trophy],
             ['league', 'Creator League', Crown],
+            ['customize', 'Customize', Sparkles],
             ['shop', 'Shop', ShoppingBag],
             ['admin', 'Admin', LayoutDashboard],
           ].map(([id, label, Icon]) => (
@@ -214,30 +482,33 @@ export default function App() {
           ))}
         </nav>
 
-        {tab === 'table' && <TableTab table={table} name={name} join={join} ev={ev} log={log} />}
+        {tab === 'table' && (
+          <TableTab table={table} name={name} join={join} ev={ev} log={log} cosmetics={cosmetics} />
+        )}
 
         {tab === 'tournaments' && (
           <Panel title="Sponsored Prize Tournaments" icon={<Trophy />}>
             <Safety />
             <div className="grid md:grid-cols-2 gap-4">
-              {tours.map((t) => (
-                <div className="panel p-4" key={t.id}>
-                  <h3 className="font-black text-xl">{t.name}</h3>
+              {tours.map((tournament) => (
+                <div className="panel p-4" key={tournament.id}>
+                  <h3 className="font-black text-xl">{tournament.name}</h3>
                   <p className="muted">
-                    Entry: FREE | Prize: ${(t.prizeCents / 100).toFixed(2)} | Source: {t.prizeSource}
+                    Entry: FREE | Prize: ${(tournament.prizeCents / 100).toFixed(2)} | Source:{' '}
+                    {tournament.prizeSource}
                   </p>
                   <p className="muted">
-                    Entrants: {t.entrants.length} | Rules: {t.rulesVersion}
+                    Entrants: {tournament.entrants.length} | Rules: {tournament.rulesVersion}
                   </p>
                   <button
                     className="btn gold mt-3"
-                    onClick={() => post(`/tournaments/${t.id}/enter`, { userId: user?.id })}
+                    onClick={() => post(`/tournaments/${tournament.id}/enter`, { userId: user?.id })}
                   >
                     Enter Free
                   </button>
                   <button
                     className="btn dark mt-3 ml-2"
-                    onClick={() => post(`/tournaments/${t.id}/accept-rules`, { userId: user?.id })}
+                    onClick={() => post(`/tournaments/${tournament.id}/accept-rules`, { userId: user?.id })}
                   >
                     Accept Rules
                   </button>
@@ -250,31 +521,65 @@ export default function App() {
         {tab === 'league' && (
           <Panel title="Creator League" icon={<Crown />}>
             <div className="grid md:grid-cols-2 gap-4">
-              {leagues.map((l) => (
-                <LeagueCard key={l.id} l={l} user={user} name={name} post={post} />
+              {leagues.map((league) => (
+                <LeagueCard key={league.id} l={league} user={user} name={name} post={post} />
               ))}
             </div>
           </Panel>
         )}
 
+        {tab === 'customize' && (
+          <CustomizeTab cosmetics={cosmetics} setCosmetics={setCosmetics} catalogIndex={catalogIndex} user={user} />
+        )}
+
         {tab === 'shop' && (
           <Panel title="Cosmetic Shop / VIP" icon={<ShoppingBag />}>
             <Safety />
-            <div className="grid md:grid-cols-4 gap-4">
-              {shop.map((i) => (
-                <div className="panel p-4" key={i.id}>
-                  <h3 className="font-black">{i.name}</h3>
-                  <p className="muted">{i.type}</p>
-                  <p className="text-2xl font-black">${(i.priceCents / 100).toFixed(2)}</p>
-                  <p className="muted text-sm">Prize impact: none</p>
-                  <button
-                    className="btn gold mt-3"
-                    onClick={() => post('/shop/purchase', { userId: user?.id, itemId: i.id })}
-                  >
-                    Buy Cosmetic
-                  </button>
-                </div>
+            <p className="shop-disclosure">
+              Cosmetic purchases do not affect gameplay, odds, rankings, or prize eligibility.
+            </p>
+
+            <div className="shop-filters">
+              <button
+                className={`btn ${shopCategory === 'all' ? 'gold' : 'dark'}`}
+                onClick={() => setShopCategory('all')}
+              >
+                All
+              </button>
+              {shopCategories.map((category) => (
+                <button
+                  key={category}
+                  className={`btn ${shopCategory === category ? 'gold' : 'dark'}`}
+                  onClick={() => setShopCategory(category)}
+                >
+                  {category}
+                </button>
               ))}
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {filteredShopItems.map((item) => {
+                const owned = cosmetics.ownedItemIds.includes(item.id);
+                return (
+                  <div className="panel p-4 shop-item-card" key={item.id}>
+                    <h3 className="font-black">{item.name}</h3>
+                    <p className="muted">{item.category}</p>
+                    <p className="text-2xl font-black">${(item.priceCents / 100).toFixed(2)}</p>
+                    <p className={`shop-owned ${owned ? 'yes' : 'no'}`}>{owned ? 'Owned' : 'Not Owned'}</p>
+                    <div className="shop-actions">
+                      {owned ? (
+                        <button className="btn dark" onClick={() => equipItem(item.id)}>
+                          Equip
+                        </button>
+                      ) : (
+                        <button className="btn gold" onClick={() => buyItem(item.id)}>
+                          Buy
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Panel>
         )}
@@ -307,9 +612,9 @@ function Aside({ table, log }) {
       </p>
       <h3 className="font-black mt-5">Game Log</h3>
       {log.length ? (
-        log.map((l, i) => (
-          <p className="muted text-sm" key={i}>
-            {l}
+        log.map((entry, index) => (
+          <p className="muted text-sm" key={index}>
+            {entry}
           </p>
         ))
       ) : (
@@ -336,8 +641,8 @@ function Safety() {
     <div className="p-4 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 mb-4">
       <b>No purchase necessary.</b>
       <p className="muted">
-        Purchases do not affect entry, odds, leaderboard score, gameplay, or prize value. Free chips
-        have no cash value.
+        Purchases do not affect entry, odds, leaderboard score, gameplay, or prize value. Free chips have
+        no cash value.
       </p>
     </div>
   );
@@ -356,8 +661,8 @@ function LeagueCard({ l, user, name, post }) {
   const [board, setBoard] = useState([]);
 
   async function load() {
-    const r = await fetch(API + `/leagues/${l.id}/leaderboard`);
-    setBoard(await r.json());
+    const response = await fetch(API + `/leagues/${l.id}/leaderboard`);
+    setBoard(await response.json());
   }
 
   useEffect(() => {
@@ -389,9 +694,9 @@ function LeagueCard({ l, user, name, post }) {
         Demo Add Score
       </button>
       <ol className="mt-4 space-y-1">
-        {board.map((b, i) => (
+        {board.map((b, index) => (
           <li key={b.userId} className="muted">
-            #{i + 1} {b.name}: {b.xp} XP / {b.wins} wins
+            #{index + 1} {b.name}: {b.xp} XP / {b.wins} wins
           </li>
         ))}
       </ol>
