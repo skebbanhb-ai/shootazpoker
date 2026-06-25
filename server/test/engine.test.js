@@ -19,8 +19,7 @@ test('ignores call action from non-seated player', () => {
 test('awards pot and completes hand when one player remains after fold', () => {
   const table = createHeadsUpTable();
   const actorId = table.players[table.turn].id;
-  const foldedId = actorId;
-  const winner = table.players.find((player) => player.id !== foldedId);
+  const winner = table.players.find((player) => player.id !== actorId);
   const winnerChipsBefore = winner.chips;
 
   const result = table.fold(actorId);
