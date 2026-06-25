@@ -54,9 +54,10 @@ shopRouter.get('/inventory/:userId', (req, res) => {
 
 shopRouter.post('/purchase', (req, res) => {
   const { userId, itemId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'userId is required' });
   const item = cosmeticsCatalog.find((candidate) => candidate.id === itemId);
   const user = users.get(userId);
-  if (!item || !userId) return res.status(404).json({ error: 'Item or user not found' });
+  if (!item) return res.status(404).json({ error: 'Item not found' });
   if (user) ensureUserCosmetics(userId);
 
   try {

@@ -98,6 +98,18 @@ function itemNameById(catalogIndex, id, fallback = 'None') {
   return catalogIndex.get(id)?.name || fallback;
 }
 
+function withPaymentParamRemoved(params) {
+  return `${window.location.pathname}${params.size ? `?${params}` : ''}`;
+}
+
+function mergeEquipped(remote = {}, local = {}) {
+  const merged = { ...remote };
+  for (const [slot, localValue] of Object.entries(local)) {
+    if (localValue) merged[slot] = localValue;
+  }
+  return merged;
+}
+
 function TableTab({ table, name, join, ev, log, cosmetics }) {
   const players = table?.players || [];
   const seats = useMemo(() => buildSeatData(players), [players]);
@@ -159,11 +171,7 @@ function TableTab({ table, name, join, ev, log, cosmetics }) {
                       <p className="muted text-xs">Bet: {player.currentBet || 0}</p>
                       <div className="seat-cards">
                         {(player.cards || ['🂠', '🂠']).map((card, cardIndex) => (
-                          <Card
-                            key={cardIndex}
-                            c={card}
-                            cardTheme={card === '🂠' ? player.cardBack || cardBack : cardBack}
-                          />
+                          <Card key={cardIndex} c={card} cardTheme={player.cardBack || cardBack} />
                         ))}
                       </div>
                     </>
@@ -325,12 +333,12 @@ export default function App() {
     if (payment === 'success') {
       setPaymentBanner('Purchase successful. Your cosmetic is ready.');
       params.delete('payment');
-      window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`);
+      window.history.replaceState({}, '', withPaymentParamRemoved(params));
     }
     if (payment === 'cancelled') {
       setPaymentBanner('Checkout cancelled. No purchase was made.');
       params.delete('payment');
-      window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`);
+      window.history.replaceState({}, '', withPaymentParamRemoved(params));
     }
   }, []);
 
@@ -344,10 +352,7 @@ export default function App() {
           userId: user.id,
           displayName: user.name || prev.displayName,
           ownedItemIds: Array.from(new Set([...(inventory.ownedItemIds || []), ...(prev.ownedItemIds || [])])),
-          equipped: {
-            ...inventory.equipped,
-            ...prev.equipped,
-          },
+          equipped: mergeEquipped(inventory.equipped, prev.equipped),
         }));
       })
       .catch(() => {});
