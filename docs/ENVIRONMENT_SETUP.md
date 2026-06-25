@@ -43,8 +43,8 @@ Set these in the Render Web Service (`shootazpoker-api`) environment settings:
 - `JWT_SECRET=long random private secret`
 - `ADMIN_EMAIL=owner/admin email`
 - `ADMIN_PASSWORD=strong admin password`
-- `STRIPE_SECRET_KEY=sk_test_or_sk_live_here`
-- `STRIPE_WEBHOOK_SECRET=whsec_here`
+- `STRIPE_SECRET_KEY=sk_test_REPLACE_ME`
+- `STRIPE_WEBHOOK_SECRET=whsec_REPLACE_ME`
 - `REAL_MONEY_ENABLED=false`
 - `PLAYER_FUNDED_PRIZES_ENABLED=false`
 - `PAID_TOURNAMENT_ENTRY_ENABLED=false`

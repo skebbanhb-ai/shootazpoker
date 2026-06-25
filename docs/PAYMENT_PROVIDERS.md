@@ -54,7 +54,7 @@ Square and Cash App Pay can be added as an alternative cosmetic checkout provide
 
 ### Crypto Checkout Provider (Config-ready, not yet active)
 
-Crypto payments for cosmetics can be added via a compliant third-party provider (e.g. Coinbase Commerce, NOWPayments, Transak, or similar).
+Crypto payments for cosmetics can be added via a compliant checkout provider (e.g. Stripe stablecoin support, Coinbase Commerce, NOWPayments, Transak, or similar).
 
 **When to enable:** Set `CRYPTO_PROVIDER`, `CRYPTO_API_KEY`, and `CRYPTO_WEBHOOK_SECRET` on the backend.
 
