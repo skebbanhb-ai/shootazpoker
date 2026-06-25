@@ -12,6 +12,7 @@ import { walletRouter } from './routes/wallet.js';
 import { tournamentRouter } from './routes/tournaments.js';
 import { leagueRouter } from './routes/leagues.js';
 import { shopRouter } from './routes/shop.js';
+import { paymentRouter } from './routes/payments.js';
 import { adminRouter } from './routes/admin.js';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use('/wallet', walletRouter);
 app.use('/tournaments', tournamentRouter);
 app.use('/leagues', leagueRouter);
 app.use('/shop', shopRouter);
+app.use('/payments', paymentRouter);
 app.use('/admin', adminRouter);
 
 const server = http.createServer(app);

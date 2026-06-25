@@ -11,7 +11,8 @@ import {
   User,
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
 const socket = io(API);
 const MAX_SEATS = 6;
 const COSMETICS_STORAGE_KEY = 'shootaz-cosmetics-v1';
@@ -439,8 +440,7 @@ export default function App() {
     return json;
   }
 
-  async function buyItem(itemId) {
-    const userId = user?.id || cosmetics.userId;
+  async function runDemoPurchase(userId, itemId) {
     const result = await post('/shop/purchase', { userId, itemId });
     if (result?.inventory) {
       setCosmetics((prev) => ({
@@ -453,6 +453,39 @@ export default function App() {
     if (result?.item?.grantsVip) {
       setUser((prev) => (prev ? { ...prev, vip: true } : prev));
     }
+    return result;
+  }
+
+  async function buyItem(itemId) {
+    const userId = user?.id || cosmetics.userId;
+    try {
+      const response = await fetch(`${API}/payments/checkout/cosmetic`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, itemId }),
+      });
+
+      if (response.status === 404 || response.status === 405) {
+        await runDemoPurchase(userId, itemId);
+        return;
+      }
+
+      const checkout = await response.json();
+      if (checkout?.url) {
+        window.location.href = checkout.url;
+        return;
+      }
+
+      if (checkout?.error) {
+        setLog((items) => [checkout.error, ...items]);
+        return;
+      }
+    } catch {
+      await runDemoPurchase(userId, itemId);
+      return;
+    }
+
+    setLog((items) => ['Checkout could not be started. Try again in a moment.', ...items]);
   }
 
   async function equipItem(itemId) {
@@ -558,7 +591,11 @@ export default function App() {
           <Panel title="Cosmetic Shop / VIP" icon={<ShoppingBag />}>
             <Safety />
             <p className="shop-disclosure">
-              Cosmetic purchases do not affect gameplay, odds, rankings, or prize eligibility.
+              Cosmetic purchases do not affect gameplay, odds, rankings, tournament outcomes, or prize eligibility.
+            </p>
+            <p className="muted text-sm">
+              Checkout uses backend-only Stripe secret keys. Frontend key status:{' '}
+              {STRIPE_PUBLISHABLE_KEY ? 'Configured' : 'Not configured'}.
             </p>
 
             <div className="shop-filters">

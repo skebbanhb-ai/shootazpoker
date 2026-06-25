@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
     "test": "npm test --workspace=server",
-    "lint": "echo Add ESLint config"
+    "build": "npm run build --workspace=client",
+    "lint": "echo Add ESLint config",
+    "security:scan": "grep -R \"sk_live_\\|sk_test_\\|rk_live_\\|rk_test_\\|whsec_\" . --exclude-dir=node_modules --exclude-dir=.git || true",
+    "security:scan:pk": "grep -R \"pk_live_\\|pk_test_\" . --exclude-dir=node_modules --exclude-dir=.git || true"
   },
   "devDependencies": { "concurrently": "^9.0.0" }
 }
