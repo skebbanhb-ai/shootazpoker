@@ -1,2 +1,3 @@
-@tailwind base;@tailwind components;@tailwind utilities;
+@import "tailwindcss";
+@source "../src/**/*.{js,jsx}";
 body{margin:0;background:#070508;color:#fff;font-family:Inter,system-ui,sans-serif}.panel{border-radius:22px;background:linear-gradient(180deg,#171018,#0d0910);border:1px solid #3a2440;box-shadow:0 20px 60px #0008}.btn{border:0;border-radius:14px;padding:10px 14px;font-weight:900;cursor:pointer}.gold{background:#d9a72f;color:#130c04}.dark{background:#27182e;color:#fff}.redbtn{background:#8b1538;color:#fff}.cardx{display:inline-flex;align-items:center;justify-content:center;width:54px;height:76px;border-radius:10px;background:#f7f2e8;color:#111;font-weight:900;margin:4px}.red{color:#b30025}.pill{background:#d9a72f;color:#130c04;border-radius:999px;padding:6px 12px;font-weight:900}.input{border-radius:12px;padding:10px;color:#111}.muted{color:#b9adbf}
