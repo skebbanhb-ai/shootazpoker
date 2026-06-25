@@ -47,26 +47,30 @@ export function createGameSocket(io) {
 
     socket.on('action:fold', ({ tableId = 'main-free' } = {}) => {
       const table = tables.get(tableId);
-      table?.fold(socket.id);
+      const result = table?.fold(socket.id);
       emit(io, table);
+      if (result) io.to(table.id).emit('hand:result', result);
     });
 
     socket.on('action:check', ({ tableId = 'main-free' } = {}) => {
       const table = tables.get(tableId);
-      table?.check();
+      const result = table?.check(socket.id);
       emit(io, table);
+      if (result) io.to(table.id).emit('hand:result', result);
     });
 
     socket.on('action:call', ({ tableId = 'main-free' } = {}) => {
       const table = tables.get(tableId);
-      table?.call(socket.id);
+      const result = table?.call(socket.id);
       emit(io, table);
+      if (result) io.to(table.id).emit('hand:result', result);
     });
 
     socket.on('action:raise', ({ tableId = 'main-free', amount = 20 } = {}) => {
       const table = tables.get(tableId);
-      table?.raise(socket.id, amount);
+      const result = table?.raise(socket.id, amount);
       emit(io, table);
+      if (result) io.to(table.id).emit('hand:result', result);
     });
 
     socket.on('street:next', ({ tableId = 'main-free' } = {}) => {

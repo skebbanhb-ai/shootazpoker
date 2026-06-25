@@ -102,26 +102,51 @@ export class PokerTable {
   }
 
   fold(id) {
+    if (!this.isHandActive()) return null;
+    const current = this.players[this.turn];
+    if (!current || current.id !== id || current.folded) return null;
     const player = this.players.find((candidate) => candidate.id === id);
-    if (player) player.folded = true;
+    if (!player) return null;
+    player.folded = true;
+    const activePlayers = this.players.filter((candidate) => !candidate.folded);
+    if (activePlayers.length === 1) {
+      return this.endHandByFold(activePlayers[0]);
+    }
     this.nextTurn();
+    return null;
   }
 
-  check() {
+  check(id) {
+    if (!this.isHandActive()) return null;
+    const current = this.players[this.turn];
+    if (!current || current.id !== id || current.folded) return null;
     this.nextTurn();
+    return null;
   }
 
   call(id) {
+    if (!this.isHandActive()) return null;
+    const current = this.players[this.turn];
+    if (!current || current.id !== id || current.folded) return null;
     const player = this.players.find((candidate) => candidate.id === id);
+    if (!player) return null;
     const maxBet = Math.max(...this.players.map((candidate) => candidate.currentBet));
     this.takeBet(player, maxBet - player.currentBet);
     this.nextTurn();
+    return null;
   }
 
   raise(id, amount) {
+    if (!this.isHandActive()) return null;
+    const current = this.players[this.turn];
+    if (!current || current.id !== id || current.folded) return null;
     const player = this.players.find((candidate) => candidate.id === id);
-    this.takeBet(player, amount);
+    if (!player) return null;
+    const maxBet = Math.max(...this.players.map((candidate) => candidate.currentBet));
+    const toCall = Math.max(0, maxBet - player.currentBet);
+    this.takeBet(player, toCall + amount);
     this.nextTurn();
+    return null;
   }
 
   nextTurn() {
@@ -130,7 +155,7 @@ export class PokerTable {
     do {
       this.turn = (this.turn + 1) % this.players.length;
       guard += 1;
-    } while (this.players[this.turn]?.folded && guard < 20);
+    } while (this.players[this.turn]?.folded && guard < this.players.length + 1);
   }
 
   dealNextStreet() {
@@ -153,8 +178,10 @@ export class PokerTable {
 
   showdown() {
     const activePlayers = this.players.filter((player) => !player.folded);
+    if (!activePlayers.length) return null;
     const ranking = evaluatePlayers(activePlayers, this.community);
     const winner = this.players.find((player) => player.id === ranking[0].playerId);
+    if (!winner) return null;
     winner.chips += this.pot;
     winner.xp += 100;
     this.pot = 0;
@@ -183,6 +210,25 @@ export class PokerTable {
         ...player,
         cards: player.id === forPlayerId || this.stage === 'COMPLETE' ? player.cards : ['🂠', '🂠'],
       })),
+    };
+  }
+
+  isHandActive() {
+    return ['PREFLOP', 'FLOP', 'TURN', 'RIVER'].includes(this.stage);
+  }
+
+  endHandByFold(winner) {
+    if (!winner) return null;
+    winner.chips += this.pot;
+    winner.xp += 100;
+    this.pot = 0;
+    this.stage = 'COMPLETE';
+    this.button = (this.button + 1) % this.players.length;
+    return {
+      ranking: [],
+      winnerId: winner.id,
+      winnerName: winner.name,
+      fairnessReveal: this.fairness ? { ...this.fairness, dealtDeck: this.dealtDeck, deck: undefined } : null,
     };
   }
 }
