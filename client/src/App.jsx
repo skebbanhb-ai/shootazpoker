@@ -22,6 +22,11 @@ const socket = io(API);
 const MAX_SEATS = 6;
 const COSMETICS_STORAGE_KEY = 'shootaz-cosmetics-v1';
 
+const RARITY_SCORE = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
+const RARITY_COLOR = {
+  common: '#888', rare: '#4da6ff', epic: '#9d4edd', legendary: '#ff006e', founder: '#ffd60a', vip: '#ffd60a',
+};
+
 const AVATAR_PRESETS = [
   { id: 'avatar-gold-shooter', name: 'Gold Shooter', icon: '🥇' },
   { id: 'avatar-royal-player', name: 'Royal Player', icon: '👑' },
@@ -282,12 +287,60 @@ function TableTab({
             })}
             {selectedPlayer ? (
               <aside className="player-profile-card">
-                <h4>{selectedPlayer.name}</h4>
-                <p className="muted text-xs">Avatar: {avatarById(selectedPlayer.avatar).name}</p>
-                <p className="muted text-xs">Outfit: {itemNameById(catalogIndex, selectedPlayer.outfit, 'Default')}</p>
-                <p className="muted text-xs">Background: {itemNameById(catalogIndex, selectedPlayer.background, 'Default')}</p>
-                <p className="muted text-xs">Frame: {itemNameById(catalogIndex, selectedPlayer.avatarFrame, 'None')}</p>
-                <button className="btn dark mt-2" onClick={() => setSelectedPlayerId(null)}>
+                <div className="ppc-header">
+                  <div className={`avatar-ring ppc-avatar frame-${slug(selectedPlayer.avatarFrame)}`}>
+                    <span className="avatar-icon" role="img" aria-label="player-avatar">
+                      {avatarById(selectedPlayer.avatar).icon}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="ppc-name">{selectedPlayer.name}</h4>
+                    {selectedPlayer.vip && <span className="seat-badge vip">VIP</span>}
+                    {selectedPlayer.badge === 'founder-badge' && <span className="seat-badge founder">Founder</span>}
+                  </div>
+                </div>
+                <div className="ppc-divider" />
+                <div className="ppc-rows">
+                  <div className="ppc-row">
+                    <span className="ppc-row-icon">👗</span>
+                    <span className="ppc-row-label">Outfit</span>
+                    <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.outfit, 'Default')}</span>
+                  </div>
+                  <div className="ppc-row">
+                    <span className="ppc-row-icon">🖼️</span>
+                    <span className="ppc-row-label">Frame</span>
+                    <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.avatarFrame, 'None')}</span>
+                  </div>
+                  {selectedPlayer.watch && (
+                    <div className="ppc-row">
+                      <span className="ppc-row-icon">⌚</span>
+                      <span className="ppc-row-label">Watch</span>
+                      <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.watch, 'None')}</span>
+                    </div>
+                  )}
+                  {selectedPlayer.chain && (
+                    <div className="ppc-row">
+                      <span className="ppc-row-icon">⛓</span>
+                      <span className="ppc-row-label">Chain</span>
+                      <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.chain, 'None')}</span>
+                    </div>
+                  )}
+                  {selectedPlayer.vehicle && (
+                    <div className="ppc-row">
+                      <span className="ppc-row-icon">🚘</span>
+                      <span className="ppc-row-label">Ride</span>
+                      <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.vehicle, 'None')}</span>
+                    </div>
+                  )}
+                  {selectedPlayer.home && (
+                    <div className="ppc-row">
+                      <span className="ppc-row-icon">🏠</span>
+                      <span className="ppc-row-label">Home</span>
+                      <span className="ppc-row-value">{itemNameById(catalogIndex, selectedPlayer.home, 'None')}</span>
+                    </div>
+                  )}
+                </div>
+                <button className="btn dark ppc-close" onClick={() => setSelectedPlayerId(null)}>
                   Close
                 </button>
               </aside>
@@ -357,12 +410,10 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }
   
   // Calculate Style Score from equipped cosmetic rarities
   const calcStyleScore = () => {
-    const rarityValues = { common: 1, rare: 3, epic: 7, legendary: 15, founder: 25, vip: 10 };
     let score = 0;
-    Object.entries(cosmetics.equipped).forEach(([slot, itemId]) => {
+    Object.entries(cosmetics.equipped).forEach(([, itemId]) => {
       if (itemId && catalogIndex.has(itemId)) {
-        const item = catalogIndex.get(itemId);
-        score += rarityValues[item.rarity] || 0;
+        score += RARITY_SCORE[catalogIndex.get(itemId).rarity] || 0;
       }
     });
     return Math.round(score);
@@ -515,6 +566,136 @@ function CustomizeTab({ cosmetics, setCosmetics, catalogIndex, user, equipItem }
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function ShowcaseItem({ label, icon, name, rarity }) {
+  const isEmpty = !name || name === 'None';
+  const rarityColor = rarity ? RARITY_COLOR[rarity] || '#888' : null;
+  return (
+    <div className={`showcase-item ${isEmpty ? 'showcase-item-empty' : 'showcase-item-equipped'}`}>
+      <span className="showcase-item-icon">{icon}</span>
+      <div className="showcase-item-text">
+        <p className="showcase-item-label">{label}</p>
+        <p className="showcase-item-name" style={rarityColor ? { color: rarityColor } : undefined}>
+          {isEmpty ? <span className="muted">None equipped</span> : name}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ProfileTab({ cosmetics, user, catalogIndex }) {
+  const selectedAvatar = avatarById(cosmetics.equipped.avatar);
+
+  const calcStyleScore = () => {
+    let score = 0;
+    Object.entries(cosmetics.equipped).forEach(([, itemId]) => {
+      if (itemId && catalogIndex.has(itemId)) {
+        score += RARITY_SCORE[catalogIndex.get(itemId).rarity] || 0;
+      }
+    });
+    return Math.round(score);
+  };
+
+  const styleScore = calcStyleScore();
+  const isVip = user?.vip || cosmetics.equipped.badge === 'badge-vip-monthly';
+  const isFounder = cosmetics.equipped.badge === 'founder-badge';
+  const displayName = user?.name || cosmetics.displayName;
+
+  function equippedItem(slot) {
+    const id = cosmetics.equipped[slot];
+    return id ? catalogIndex.get(id) || null : null;
+  }
+
+  const watchItem = equippedItem('watch');
+  const chainItem = equippedItem('chain');
+  const ringItem = equippedItem('ring');
+  const vehicleItem = equippedItem('vehicle');
+  const homeItem = equippedItem('home');
+  const outfitItem = equippedItem('outfit');
+
+  return (
+    <Panel title="Player Profile" icon={<User />}>
+      {/* Public Profile Card */}
+      <div className="profile-card-luxury">
+        <div className="profile-card-header">
+          <div className={`avatar-ring profile-avatar-ring frame-${slug(cosmetics.equipped.avatarFrame)}`}>
+            <span className="avatar-icon profile-avatar-icon" role="img" aria-label="player-avatar">
+              {selectedAvatar.icon}
+            </span>
+          </div>
+          <div className="profile-card-info">
+            <div className="profile-card-name-row">
+              <h2 className="profile-card-name">{displayName}</h2>
+              {isVip && <span className="profile-badge vip-badge">👑 VIP</span>}
+              {isFounder && <span className="profile-badge founder-badge-pill">⭐ Founder</span>}
+            </div>
+            <p className="muted text-sm">{selectedAvatar.name}</p>
+            <div className="profile-style-score">
+              <span className="style-score-label">✨ Style Score</span>
+              <span className="style-score-value">{styleScore}</span>
+              <span className="muted text-xs">Cosmetic Only</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Equipped Outfit Banner */}
+        {outfitItem && (
+          <div className="profile-outfit-banner">
+            <span>{outfitItem.icon || '👔'}</span>
+            <span className="profile-outfit-name">{outfitItem.name}</span>
+            <span className="profile-outfit-rarity" style={{ color: RARITY_COLOR[outfitItem.rarity] || '#888' }}>
+              {(outfitItem.rarity || 'common').toUpperCase()}
+            </span>
+          </div>
+        )}
+
+        {/* Showcase Grid */}
+        <div className="profile-showcase-grid">
+          {/* Jewelry Box */}
+          <div className="showcase-card">
+            <h3 className="showcase-title">💎 Jewelry Box</h3>
+            <div className="showcase-items">
+              <ShowcaseItem label="Watch" icon="⌚" name={watchItem?.name || 'None'} rarity={watchItem?.rarity} />
+              <ShowcaseItem label="Chain" icon="⛓" name={chainItem?.name || 'None'} rarity={chainItem?.rarity} />
+              <ShowcaseItem label="Ring"  icon="💍" name={ringItem?.name  || 'None'} rarity={ringItem?.rarity}  />
+            </div>
+          </div>
+
+          {/* Garage Showcase */}
+          <div className="showcase-card">
+            <h3 className="showcase-title">🏎️ Garage</h3>
+            <div className="showcase-items">
+              <ShowcaseItem label="Vehicle" icon="🚘" name={vehicleItem?.name || 'None'} rarity={vehicleItem?.rarity} />
+            </div>
+          </div>
+
+          {/* Property Showcase */}
+          <div className="showcase-card">
+            <h3 className="showcase-title">🏠 Property</h3>
+            <div className="showcase-items">
+              <ShowcaseItem label="Home" icon="🏡" name={homeItem?.name || 'None'} rarity={homeItem?.rarity} />
+            </div>
+          </div>
+
+          {/* Outfit */}
+          <div className="showcase-card">
+            <h3 className="showcase-title">👔 Outfit</h3>
+            <div className="showcase-items">
+              <ShowcaseItem label="Outfit" icon="👗" name={outfitItem?.name || 'None'} rarity={outfitItem?.rarity} />
+            </div>
+          </div>
+        </div>
+
+        {/* Collection Summary */}
+        <div className="profile-collection-footer">
+          <span className="muted text-xs">📦 {cosmetics.ownedItemIds.length} items in collection</span>
+          {isVip && <span className="profile-badge vip-badge">VIP Member</span>}
+          {isFounder && <span className="profile-badge founder-badge-pill">Founder</span>}
         </div>
       </div>
     </Panel>
@@ -750,6 +931,7 @@ export default function App() {
         <nav className="flex flex-wrap gap-2 mb-5">
           {[
             ['table', 'Table', Flame],
+            ['profile', 'Profile', User],
             ['tournaments', 'Tournaments', Trophy],
             ['league', 'Creator League', Crown],
             ['customize', 'Customize', Sparkles],
@@ -784,6 +966,10 @@ export default function App() {
               loadAdmin();
             }}
           />
+        )}
+
+        {tab === 'profile' && (
+          <ProfileTab cosmetics={cosmetics} user={user} catalogIndex={catalogIndex} />
         )}
 
         {tab === 'tournaments' && (
@@ -870,15 +1056,7 @@ export default function App() {
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {filteredShopItems.map((item) => {
                 const owned = cosmetics.ownedItemIds.includes(item.id);
-                const rarityColors = {
-                  common: '#888',
-                  rare: '#4da6ff',
-                  epic: '#9d4edd',
-                  legendary: '#ff006e',
-                  founder: '#ffd60a',
-                  vip: '#ffd60a',
-                };
-                const rarityColor = rarityColors[item.rarity] || '#888';
+                const rarityColor = RARITY_COLOR[item.rarity] || '#888';
                 return (
                   <div
                     key={item.id}

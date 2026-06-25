@@ -405,12 +405,12 @@ body {
   right: 1rem;
   top: 1rem;
   z-index: 5;
-  width: 200px;
-  border-radius: 14px;
-  border: 1px solid #ffffff2c;
-  background: linear-gradient(180deg, #1e1723, #110d15);
-  padding: 0.65rem;
-  box-shadow: 0 14px 36px #0009;
+  width: 230px;
+  border-radius: 16px;
+  border: 1px solid rgba(217, 167, 47, 0.4);
+  background: linear-gradient(160deg, #1e1428, #110d18);
+  padding: 0.85rem;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.7);
 }
 
 .action-bar {
@@ -839,6 +839,292 @@ body {
 
 .shop-owned.no {
   color: #d9a72f;
+}
+
+/* ===== Player Profile + Luxury Inventory Showcase v2 ===== */
+
+.profile-card-luxury {
+  background: linear-gradient(160deg, #1e1428 0%, #110d18 100%);
+  border: 1px solid rgba(217, 167, 47, 0.35);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.profile-card-header {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.profile-avatar-ring {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-width: 3px;
+}
+
+.profile-avatar-icon {
+  font-size: 2.4rem;
+}
+
+.profile-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-card-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.profile-card-name {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.profile-badge {
+  display: inline-block;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.profile-badge.vip-badge {
+  background: #f8d26b;
+  color: #1f1406;
+}
+
+.profile-badge.founder-badge-pill {
+  background: #b28dff;
+  color: #130b27;
+}
+
+.profile-style-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.style-score-label {
+  font-size: 0.8rem;
+  color: #b9adbf;
+  font-weight: 700;
+}
+
+.style-score-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #d9a72f;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(217, 167, 47, 0.5);
+}
+
+.profile-outfit-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: rgba(217, 167, 47, 0.08);
+  border: 1px solid rgba(217, 167, 47, 0.25);
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+.profile-outfit-name {
+  font-weight: 800;
+  flex: 1;
+}
+
+.profile-outfit-rarity {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.profile-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.showcase-card {
+  background: linear-gradient(135deg, rgba(39, 24, 46, 0.6), rgba(13, 9, 16, 0.6));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.showcase-card:hover {
+  border-color: rgba(217, 167, 47, 0.5);
+  box-shadow: 0 0 16px rgba(217, 167, 47, 0.12);
+}
+
+.showcase-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  margin: 0 0 0.75rem;
+  color: #e5cb7d;
+}
+
+.showcase-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.showcase-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 9px;
+}
+
+.showcase-item-equipped {
+  background: rgba(217, 167, 47, 0.07);
+  border: 1px solid rgba(217, 167, 47, 0.2);
+}
+
+.showcase-item-empty {
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.1);
+}
+
+.showcase-item-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.showcase-item-text {
+  min-width: 0;
+}
+
+.showcase-item-label {
+  font-size: 0.68rem;
+  color: #b9adbf;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.showcase-item-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-collection-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ===== Enhanced Table Player Profile Popup ===== */
+
+.ppc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.ppc-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.ppc-name {
+  font-size: 0.95rem;
+  font-weight: 900;
+  margin: 0 0 0.2rem;
+}
+
+.ppc-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 0.5rem 0;
+}
+
+.ppc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.ppc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.ppc-row-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.ppc-row-label {
+  color: #b9adbf;
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 42px;
+}
+
+.ppc-row-value {
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ppc-close {
+  width: 100%;
+  padding: 0.45rem;
+  font-size: 0.82rem;
+  border-radius: 9px;
+}
+
+@media (max-width: 600px) {
+  .profile-card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-card-name-row {
+    justify-content: center;
+  }
+
+  .profile-style-score {
+    justify-content: center;
+  }
+
+  .profile-showcase-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Rarity Colors */
