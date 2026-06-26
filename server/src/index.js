@@ -16,7 +16,7 @@ import { paymentRouter } from './routes/payments.js';
 import { adminRouter } from './routes/admin.js';
 
 const allowedOrigins = process.env.CLIENT_ORIGIN
-  ? process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim())
+  ? process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
   : [];
 
 const app = express();
