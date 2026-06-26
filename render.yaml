@@ -62,6 +62,8 @@ services:
     envVars:
       - key: VITE_BASE_PATH
         value: /
+      - key: BASE_PATH
+        value: /
       - key: VITE_API_BASE_URL
         value: https://shootazpoker-api.onrender.com
       - key: VITE_APP_NAME
