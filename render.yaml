@@ -70,3 +70,7 @@ services:
         value: pk_test_REPLACE_ME
       - key: VITE_ENABLE_DEMO_PURCHASES
         value: "false"
+      - key: BASE_PATH
+        value: /
+      - key: VITE_API_BASE_URL
+        value: https://shootazpoker-api.onrender.com
