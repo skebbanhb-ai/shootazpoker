@@ -37,6 +37,7 @@ async function testRequest(app, method, path, body) {
     const json = await res.json();
     return { status: res.status, body: json };
   } finally {
+    if (typeof server.closeAllConnections === 'function') server.closeAllConnections();
     await new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
   }
 }
@@ -61,6 +62,8 @@ test('sample catalog items pass assertCosmeticOnlyPurchase', () => {
 
 test('POST /shop/purchase returns 403 when ALLOW_DEMO_PURCHASES is not true', async () => {
   const original = process.env.ALLOW_DEMO_PURCHASES;
+  const testUserId = 'user-test-blocked';
+  users.set(testUserId, { id: testUserId, username: 'testuser-blocked' });
   try {
     for (const val of [undefined, 'false', '0', '']) {
       if (val === undefined) {
@@ -70,12 +73,13 @@ test('POST /shop/purchase returns 403 when ALLOW_DEMO_PURCHASES is not true', as
       }
       const app = createTestApp();
       const { status } = await testRequest(app, 'POST', '/shop/purchase', {
-        userId: 'user-test-blocked',
+        userId: testUserId,
         itemId: 'card-back-gold',
       });
       assert.equal(status, 403, `Expected 403 for ALLOW_DEMO_PURCHASES=${val}`);
     }
   } finally {
+    users.delete(testUserId);
     if (original === undefined) {
       delete process.env.ALLOW_DEMO_PURCHASES;
     } else {
