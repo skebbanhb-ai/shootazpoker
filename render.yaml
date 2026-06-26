@@ -6,13 +6,16 @@ services:
     rootDir: server
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
       - key: CLIENT_ORIGIN
-        sync: false
+        value: https://skebbanhb-ai.github.io/shootazpoker,https://shootazpoker.onrender.com
+      - key: PUBLIC_BASE_URL
+        value: https://skebbanhb-ai.github.io/shootazpoker
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -25,8 +28,6 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
-      - key: PUBLIC_BASE_URL
-        sync: false
       - key: REAL_MONEY_ENABLED
         value: "false"
       - key: PLAYER_FUNDED_PRIZES_ENABLED
@@ -35,15 +36,40 @@ services:
         value: "false"
       - key: CHIP_CASHOUT_ENABLED
         value: "false"
+      - key: ALLOW_DEMO_PURCHASES
+        value: "false"
+      # Optional Square / Cash App Pay
+      - key: SQUARE_ACCESS_TOKEN
+        sync: false
+      - key: SQUARE_LOCATION_ID
+        sync: false
+      - key: SQUARE_WEBHOOK_SIGNATURE_KEY
+        sync: false
+      # Optional crypto checkout provider
+      - key: CRYPTO_PROVIDER
+        sync: false
+      - key: CRYPTO_API_KEY
+        sync: false
+      - key: CRYPTO_WEBHOOK_SECRET
+        sync: false
 
   - type: web
-    name: sh0-0ta-poker-client
+    name: shootazpoker
     env: static
     plan: free
-    rootDir: client
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: client/dist
     envVars:
+      - key: VITE_BASE_PATH
+        value: /
+      - key: VITE_API_BASE_URL
+        value: https://shootazpoker-api.onrender.com
+      - key: VITE_APP_NAME
+        value: ShootazPokerHouse
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        value: pk_test_REPLACE_ME
+      - key: VITE_ENABLE_DEMO_PURCHASES
+        value: "false"
       - key: BASE_PATH
         value: /
       - key: VITE_API_BASE_URL
